@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes, viewport-fit=cover">
+  <meta name="theme-color" content="#07090e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>djay Pro - Adaptive Dual Deck Suite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --deck-a: #00f0ff;
+      --deck-a-glow: rgba(0, 240, 255, 0.45);
+      --deck-b: #f59e0b;
+      --deck-b-glow: rgba(245, 158, 11, 0.45);
+      --bg-dark: #07090e;
+      --border-edge: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-dark);
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .font-display {
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    /* Pan & Zoom Scroll Viewport */
+    #zoom-scroll-viewport {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      position: relative;
+    }
+
+    #zoom-scroll-viewport::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    #zoom-scroll-viewport::-webkit-scrollbar-track {
+      background: #06080d;
+    }
+    #zoom-scroll-viewport::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    #zoom-scroll-viewport::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* Scaled Console Wrapper */
+    #scaler-outer-box {
+      display: inline-block;
+      vertical-align: top;
+      transform-origin: 0 0;
+      transition: transform 0.15s ease-out;
+    }
+
+    #dj-hardware-console {
+      width: 1220px;
+      min-width: 1220px;
+      margin: 0 auto;
+    }
+
+    /* Pioneer & djay Pro Hardware Styles */
+    .chassis {
+      background: radial-gradient(ellipse at 50% 0%, #151a24 0%, #0d1118 100%);
+      border: 1px solid var(--border-edge);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .sub-chassis {
+      background: #090c12;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85);
+    }
+
+    /* Rotary Knobs */
+    .knob-wrap {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      cursor: ns-resize;
+      touch-action: none;
+    }
+
+    .knob-disk {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #333a4d 0%, #181d28 65%, #0b0e14 100%);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.85), inset 0 1px 1px rgba(255,255,255,0.25), 0 0 0 1.5px #07090e;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .knob-notch {
+      position: absolute;
+      top: 3px;
+      width: 3px;
+      height: 8px;
+      background: #ffffff;
+      border-radius: 2px;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* Pioneer Round Tactile Buttons */
+    .cdj-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 0 #050608, 0 6px 14px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.25);
+      transition: transform 0.05s ease, box-shadow 0.05s ease;
+      touch-action: manipulation;
+    }
+
+    .cdj-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #050608, inset 0 2px 6px rgba(0,0,0,0.9);
+    }
+
+    /* Jog Wheels */
+    .jog-platter {
+      border-radius: 50%;
+      background: radial-gradient(circle, #1a202c 0%, #0f141d 55%, #05070a 100%);
+      box-shadow: 0 0 0 4px #121622, 0 0 0 6px #242c3f, 0 8px 24px rgba(0,0,0,0.95);
+      position: relative;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .jog-platter:active {
+      cursor: grabbing;
+    }
+
+    .jog-grooves {
+      background-image: repeating-radial-gradient(
+        circle at 50% 50%,
+        transparent 0,
+        transparent 2px,
+        rgba(255, 255, 255, 0.03) 3px,
+        rgba(0, 0, 0, 0.45) 4px
+      );
+    }
+
+    /* Sliders */
+    input[type=range].pitch-slider {
+      -webkit-appearance: none;
+      height: 6px;
+      background: #040608;
+      border-radius: 3px;
+      border: 1px solid #1f2736;
+      outline: none;
+      touch-action: none;
+    }
+
+    input[type=range].pitch-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 18px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #475569 0%, #1e293b 50%, #0f172a 100%);
+      border: 1px solid #94a3b8;
+      cursor: ns-resize;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.9);
+    }
+
+    input[type=range].fader-cross {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 30px;
+      background: transparent;
+      outline: none;
+      touch-action: none;
+    }
+
+    input[type=range].fader-cross::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: #040508;
+      border-radius: 3px;
+      border: 1px solid #1a2232;
+    }
+
+    input[type=range].fader-cross::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 38px;
+      width: 24px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #475569 0%, #1e293b 50%, #0f172a 100%);
+      border: 1.5px solid #cbd5e1;
+      margin-top: -16px;
+      cursor: ew-resize;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.95);
+    }
+
+    input[type=range].fader-channel {
+      -webkit-appearance: none;
+      background: transparent;
+      outline: none;
+      touch-action: none;
+    }
+
+    @keyframes phoneRotateAnim {
+      0%, 15% { transform: rotate(0deg); }
+      50%, 85% { transform: rotate(-90deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .animate-phone-turn {
+      animation: phoneRotateAnim 2.8s infinite ease-in-out;
+      transform-origin: center center;
+    }
+
+    .glow-a { box-shadow: 0 0 18px var(--deck-a-glow); }
+    .glow-b { box-shadow: 0 0 18px var(--deck-b-glow); }
+  </style>
+</head>
+<body class="flex flex-col h-screen w-screen bg-[#07090e]">
+
+  <!-- =========================================================================
+       0. ORIENTATION OVERLAY (SHOWN IN SMALL PORTRAIT, EASILY DISMISSED)
+       ========================================================================= -->
+  <aside id="rotate-device-overlay" class="fixed inset-0 z-50 bg-[#07090e]/95 backdrop-blur-xl hidden flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-sm flex flex-col items-center space-y-4">
+      <div class="relative w-24 h-24 flex items-center justify-center">
+        <svg class="w-14 h-14 text-cyan-400 animate-phone-turn drop-shadow-[0_0_12px_rgba(0,240,255,0.8)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+          <line x1="12" y1="18" x2="12.01" y2="18"/>
+        </svg>
+      </div>
+      <div class="space-y-1.5">
+        <h2 class="text-xl font-display font-extrabold uppercase text-white">Rotate to Landscape</h2>
+        <p class="text-xs text-gray-400 leading-relaxed font-sans">Turn your device sideways for the dual CDJ console. You can also dismiss to use Auto-Fit or Pan & Zoom in portrait.</p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2 mt-2 w-full justify-center">
+        <button onclick="requestFullscreenAndLock()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-display font-bold text-xs uppercase tracking-wider shadow-lg active:scale-95 transition">
+          <i class="fa-solid fa-expand mr-1.5"></i>Fullscreen & Rotate
+        </button>
+        <button onclick="dismissOrientationOverlay()" class="px-4 py-2 rounded-xl bg-gray-800 text-gray-300 font-display font-semibold text-xs uppercase tracking-wider border border-gray-700 active:scale-95 transition">
+          Auto-Fit Portrait
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       1. TOP HEADER & STACKED WAVEFORMS (STAYS FIXED ON SCREEN)
+       ========================================================================= -->
+  <header class="bg-[#0a0d14] border-b border-gray-800/80 px-2 sm:px-4 py-1.5 flex items-center justify-between shrink-0 z-30 shadow-md">
+    <!-- Brand & Session Controls -->
+    <div class="flex items-center space-x-2 shrink-0">
+      <div class="w-7 h-7 rounded bg-gradient-to-tr from-cyan-400 via-indigo-500 to-amber-500 flex items-center justify-center shadow">
+        <i class="fa-solid fa-compact-disc text-white text-xs"></i>
+      </div>
+      <div>
+        <h1 class="font-display font-extrabold text-sm sm:text-base tracking-wider text-white leading-none">djay<span class="text-cyan-400 ml-0.5">PRO</span></h1>
+        <span class="text-[9px] text-gray-400 font-mono hidden sm:inline">PIONEER PRO SUITE</span>
+      </div>
+
+      <!-- REC Session Button -->
+      <button id="rec-btn" onclick="toggleRecording()" class="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-gray-900 border border-gray-700 text-gray-300 text-xs font-semibold active:scale-95 ml-1">
+        <span id="rec-dot" class="w-2 h-2 rounded-full bg-red-600"></span>
+        <span id="rec-text" class="font-mono text-[11px]">REC</span>
+        <span id="rec-timer" class="font-mono text-gray-400 text-[10px] hidden">00:00</span>
+      </button>
+
+      <button onclick="toggleGithubModal(true)" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-600 text-xs hidden md:inline">
+        <i class="fa-brands fa-github mr-1"></i>Host Free
+      </button>
+    </div>
+
+    <!-- Stacked Dual Waveforms with Center Needle -->
+    <div class="flex-1 max-w-lg mx-2 bg-black rounded-lg border border-gray-800 p-1 relative overflow-hidden shadow-inner">
+      <div class="relative h-10 w-full flex flex-col justify-between">
+        <div class="h-4.5 w-full relative overflow-hidden bg-[#05080e]">
+          <canvas id="stacked-wave-a" class="w-full h-full block"></canvas>
+          <span class="absolute left-1 top-0.5 text-[7px] font-bold text-cyan-400 font-mono">DECK A</span>
+        </div>
+        <div class="h-[1px] w-full bg-gray-800 relative z-10 flex items-center justify-center">
+          <div class="w-0.5 h-10 bg-red-500 absolute shadow-[0_0_8px_#ff2233]"></div>
+        </div>
+        <div class="h-4.5 w-full relative overflow-hidden bg-[#0c0804]">
+          <canvas id="stacked-wave-b" class="w-full h-full block"></canvas>
+          <span class="absolute left-1 bottom-0.5 text-[7px] font-bold text-amber-400 font-mono">DECK B</span>
+        </div>
+      </div>
+      <div class="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/85 border border-gray-800 px-1.5 py-0.5 rounded text-[8px] font-mono flex items-center space-x-1 z-20">
+        <span class="text-gray-400">&Delta;</span>
+        <span id="bpm-delta-display" class="text-emerald-400 font-bold">0.0</span>
+      </div>
+    </div>
+
+    <!-- Spotify & Master Controls -->
+    <div class="flex items-center space-x-2 shrink-0">
+      <button onclick="openSpotifyModal()" class="flex items-center space-x-1.5 px-2.5 py-1 bg-[#121c16] text-[#1db954] border border-[#1db954]/50 rounded text-xs font-bold active:scale-95">
+        <i class="fa-brands fa-spotify"></i>
+        <span class="hidden sm:inline">Spotify</span>
+      </button>
+
+      <button onclick="toggleLibraryDrawer()" id="btn-toggle-library" class="flex items-center space-x-1.5 px-2.5 py-1 bg-gray-900 border border-gray-700 text-gray-300 rounded text-xs font-semibold active:scale-95">
+        <i class="fa-solid fa-list-ul"></i>
+        <span class="hidden sm:inline">Tracks</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. FLOATING ADAPTIVE ZOOM & PAN CONTROLLER HUD
+       ========================================================================= -->
+  <aside class="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 bg-[#0c1017]/90 backdrop-blur-md border border-gray-700/80 rounded-full px-3 py-1.5 shadow-2xl flex items-center space-x-2 text-xs select-none">
+    <button onclick="zoomOut()" class="w-7 h-7 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-200 flex items-center justify-center font-bold active:scale-90 transition" title="Zoom Out (Magnify Less)">
+      <i class="fa-solid fa-minus text-[10px]"></i>
+    </button>
+    <div class="flex items-center space-x-1">
+      <button onclick="autoFitScale()" id="btn-autofit" class="px-2.5 py-1 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800 font-display font-bold text-[10px] tracking-wider active:scale-95 transition">
+        AUTO-FIT
+      </button>
+      <button onclick="resetZoom100()" class="px-2 py-1 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-mono text-[10px] active:scale-95 transition">
+        100%
+      </button>
+    </div>
+    <span id="zoom-readout" class="font-mono text-cyan-400 font-bold text-[11px] min-w-[42px] text-center">100%</span>
+    <button onclick="zoomIn()" class="w-7 h-7 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-200 flex items-center justify-center font-bold active:scale-90 transition" title="Zoom In (Magnify to Read Labels)">
+      <i class="fa-solid fa-plus text-[10px]"></i>
+    </button>
+    <div class="h-4 w-px bg-gray-700 mx-0.5"></div>
+    <div class="flex items-center space-x-1 text-[9px] font-mono">
+      <button onclick="panToDeck('A')" class="px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-300 border border-cyan-700">A</button>
+      <button onclick="panToDeck('M')" class="px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700">MIX</button>
+      <button onclick="panToDeck('B')" class="px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300 border border-amber-700">B</button>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       3. ZOOMABLE & SCROLLABLE VIEWPORT CONTAINER
+       ========================================================================= -->
+  <div id="zoom-scroll-viewport" class="flex-1 w-full relative">
+    <div id="scaler-outer-box" class="p-2 sm:p-4">
+      <main id="dj-hardware-console" class="grid grid-cols-12 gap-3 items-stretch pb-16">
+
+        <!-- ==================== LEFT: DECK A (CYAN / BLUE) ==================== -->
+        <section id="deck-a-card" class="col-span-5 chassis rounded-2xl p-3 border-t-4 border-t-cyan-400 flex flex-col justify-between space-y-3">
+          <!-- Deck A Header & Overview Waveform Scrub Strip -->
+          <div class="sub-chassis rounded-xl p-2 border border-cyan-950/70 flex flex-col space-y-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 truncate">
+                <span class="px-1.5 py-0.5 rounded font-display font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">DECK 1</span>
+                <div class="truncate">
+                  <h2 id="deck-a-title" class="text-xs sm:text-sm font-bold text-white truncate leading-tight">Berlin Dark Techno</h2>
+                  <p id="deck-a-artist" class="text-[9px] text-gray-400 truncate leading-none">Charlotte & Amelie &bull; 48kHz Stems</p>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-2 shrink-0">
+                <div class="text-right leading-none">
+                  <span id="deck-a-bpm" class="font-mono text-sm font-extrabold text-cyan-400">126.00</span>
+                  <div class="text-[9px] font-mono text-gray-400 mt-0.5">
+                    <span id="deck-a-key" class="text-cyan-300 font-bold mr-1">8A</span>
+                    <span id="deck-a-pitch-readout">0.0%</span>
+                  </div>
+                </div>
+                <label class="cursor-pointer bg-gray-800 hover:bg-cyan-950 text-cyan-400 px-2 py-1 rounded-lg border border-gray-700 text-[10px] font-bold" title="Load Audio">
+                  <i class="fa-solid fa-folder-open"></i>
+                  <input type="file" accept="audio/*" class="hidden" onchange="handleLocalFile(event, 'A')">
+                </label>
+              </div>
+            </div>
+
+            <!-- Full Waveform Scrub -->
+            <div class="relative w-full h-11 bg-black rounded-lg overflow-hidden border border-gray-800 cursor-pointer" onclick="scrubDeckWaveform(event, 'A')">
+              <canvas id="deck-a-waveform" class="w-full h-full block"></canvas>
+              <div id="deck-a-playhead" class="absolute top-0 bottom-0 left-0 w-0 bg-cyan-500/10 pointer-events-none border-r-2 border-cyan-400 shadow-[0_0_8px_#00f0ff]"></div>
+              <div class="absolute bottom-1 left-1.5 font-mono text-[9px] text-cyan-300 bg-black/80 px-1 rounded" id="deck-a-elapsed">00:00.0</div>
+              <div class="absolute bottom-1 right-1.5 font-mono text-[9px] text-gray-400 bg-black/80 px-1 rounded" id="deck-a-remain">-03:45.0</div>
+            </div>
+          </div>
+
+          <!-- Platter & Pitch Tempo Slider Section -->
+          <div class="grid grid-cols-12 gap-2 items-center py-1">
+            <div class="col-span-8 flex justify-center items-center py-2">
+              <div id="jog-wheel-a" class="jog-platter w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center border-2 border-cyan-500/40">
+                <div class="absolute inset-2 rounded-full border border-cyan-500/20 pointer-events-none jog-grooves"></div>
+                <!-- Motorized Center Slipmat with Needle -->
+                <div id="jog-center-a" class="w-24 h-24 rounded-full bg-gradient-to-tr from-[#05111b] via-[#101b2a] to-[#040810] flex items-center justify-center relative shadow-2xl border-4 border-[#070d14] overflow-hidden">
+                  <div id="needle-a" class="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-cyan-400 to-transparent shadow-[0_0_8px_#00f0ff] origin-bottom"></div>
+                  <div class="w-10 h-10 rounded-full bg-black/90 p-0.5 flex flex-col items-center justify-center text-center z-10 border border-cyan-500/40">
+                    <span class="text-[7px] font-extrabold text-cyan-300 font-display leading-tight">CDJ-3000</span>
+                    <span class="text-[6px] font-mono text-gray-400">33 RPM</span>
+                  </div>
+                </div>
+                <span class="absolute bottom-2 text-[8px] font-mono text-cyan-400/80 tracking-widest pointer-events-none">VINYL SCRATCH</span>
+              </div>
+            </div>
+
+            <!-- Vertical Pitch Slider -->
+            <div class="col-span-4 flex flex-col items-center justify-between h-48 sub-chassis rounded-xl p-2 border border-gray-800">
+              <div class="flex items-center justify-between w-full px-1">
+                <span class="text-[8px] font-bold text-gray-400">TEMPO</span>
+                <button onclick="cyclePitchRange('A')" id="pitch-range-a" class="text-[8px] px-1.5 py-0.5 bg-gray-800 text-cyan-300 rounded border border-gray-700 font-mono font-bold">&plusmn;8%</button>
+              </div>
+
+              <div class="flex-1 flex items-center justify-center my-1">
+                <input type="range" id="deck-a-tempo-fader" min="-8" max="8" step="0.05" value="0" orient="vertical" class="pitch-slider -rotate-90 origin-center w-28 cursor-pointer" oninput="setDeckTempo('A', this.value)">
+              </div>
+
+              <div class="grid grid-cols-2 gap-1 w-full">
+                <button onclick="resetPitch('A')" class="text-[8px] bg-gray-800 text-gray-300 py-1 rounded border border-gray-700 active:scale-95 font-mono">0.0%</button>
+                <button id="master-tempo-a" onclick="toggleMasterTempo('A')" class="text-[8px] bg-cyan-950 text-cyan-300 py-1 rounded border border-cyan-800 font-bold active:scale-95">KEY</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pioneer CUE, PLAY/PAUSE, SYNC & Nudge Row -->
+          <div class="grid grid-cols-12 gap-2 items-center pt-2 border-t border-gray-800/80">
+            <div class="col-span-3 flex justify-center">
+              <button id="cdj-cue-a" onclick="handleCue('A')" class="cdj-btn bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900 border border-amber-400/60 text-white">
+                <span class="text-xs font-display font-extrabold text-amber-200">CUE</span>
+              </button>
+            </div>
+
+            <div class="col-span-3 flex justify-center">
+              <button id="cdj-play-a" onclick="togglePlay('A')" class="cdj-btn bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-900 border border-cyan-400/60 text-white">
+                <span id="play-icon-a" class="text-xs font-display font-extrabold flex items-center space-x-1">
+                  <i class="fa-solid fa-play"></i>
+                </span>
+              </button>
+            </div>
+
+            <div class="col-span-6 grid grid-cols-3 gap-1">
+              <button onclick="syncDeck('A')" class="h-12 rounded-lg bg-gray-900 hover:bg-cyan-950 border border-cyan-800 text-cyan-300 flex flex-col items-center justify-center font-display font-bold active:scale-95 transition">
+                <span class="text-xs">SYNC</span>
+              </button>
+              <button onclick="nudgePitch('A', -0.5)" class="h-12 rounded-lg bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 flex items-center justify-center font-mono text-sm active:scale-95 transition">
+                <span>&minus;</span>
+              </button>
+              <button onclick="nudgePitch('A', 0.5)" class="h-12 rounded-lg bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 flex items-center justify-center font-mono text-sm active:scale-95 transition">
+                <span>&plus;</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 8-Pad Performance Modes -->
+          <div class="sub-chassis rounded-xl p-2 border border-gray-800 flex flex-col space-y-2 mt-1">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-1">
+              <div class="flex space-x-1 text-[9px] font-bold">
+                <button onclick="switchPadMode('A', 'hotcue')" id="pad-mode-a-hotcue" class="px-2 py-0.5 rounded bg-cyan-900 text-cyan-200 border border-cyan-700">HOT CUE</button>
+                <button onclick="switchPadMode('A', 'loop')" id="pad-mode-a-loop" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">LOOP</button>
+                <button onclick="switchPadMode('A', 'stems')" id="pad-mode-a-stems" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">STEMS</button>
+                <button onclick="switchPadMode('A', 'sampler')" id="pad-mode-a-sampler" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">SAMPLER</button>
+              </div>
+              <span class="text-[8px] font-mono text-gray-400 uppercase" id="pad-sublabel-a">PADS 1-4</span>
+            </div>
+            <div id="pads-container-a" class="grid grid-cols-4 gap-1.5 min-h-[48px]">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== CENTER: DJM MIXER (PIONEER DJM-900) ==================== -->
+        <section id="mixer-card" class="col-span-2 chassis rounded-2xl p-2.5 border-t-4 border-t-emerald-500 flex flex-col justify-between space-y-2.5">
+          <!-- Gain / Trim Knobs -->
+          <div class="grid grid-cols-2 gap-1.5 sub-chassis p-1.5 rounded-xl border border-gray-800 text-center">
+            <div class="flex flex-col items-center">
+              <span class="text-[8px] font-bold text-cyan-400">TRIM 1</span>
+              <div class="knob-wrap mt-0.5 !w-8 !h-8" onmousedown="startKnobDrag(event, 'gain-a')" ontouchstart="startKnobDrag(event, 'gain-a')">
+                <div id="knob-gain-a" class="knob-disk text-cyan-400"><div class="knob-notch !h-1.5"></div></div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center">
+              <span class="text-[8px] font-bold text-amber-400">TRIM 2</span>
+              <div class="knob-wrap mt-0.5 !w-8 !h-8" onmousedown="startKnobDrag(event, 'gain-b')" ontouchstart="startKnobDrag(event, 'gain-b')">
+                <div id="knob-gain-b" class="knob-disk text-amber-400"><div class="knob-notch !h-1.5"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3-Band Isolator EQ & Color FX Filters -->
+          <div class="grid grid-cols-2 gap-2 sub-chassis p-2 rounded-xl border border-gray-800">
+            <!-- Ch A EQ -->
+            <div class="flex flex-col items-center space-y-1.5 border-r border-gray-800 pr-1">
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] text-gray-400 font-bold">HI</span>
+                <div class="knob-wrap !w-7 !h-7" onmousedown="startKnobDrag(event, 'eq-a-hi')" ontouchstart="startKnobDrag(event, 'eq-a-hi')">
+                  <div id="knob-eq-a-hi" class="knob-disk text-cyan-400"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+                <button onclick="toggleEqKill('A', 'hi')" id="kill-a-hi" class="text-[7px] px-1.5 py-0.2 bg-gray-900 text-gray-400 rounded border border-gray-800 mt-0.5 font-bold">KILL</button>
+              </div>
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] text-gray-400 font-bold">MID</span>
+                <div class="knob-wrap !w-7 !h-7" onmousedown="startKnobDrag(event, 'eq-a-mid')" ontouchstart="startKnobDrag(event, 'eq-a-mid')">
+                  <div id="knob-eq-a-mid" class="knob-disk text-cyan-400"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+                <button onclick="toggleEqKill('A', 'mid')" id="kill-a-mid" class="text-[7px] px-1.5 py-0.2 bg-gray-900 text-gray-400 rounded border border-gray-800 mt-0.5 font-bold">KILL</button>
+              </div>
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] text-gray-400 font-bold">LOW</span>
+                <div class="knob-wrap !w-7 !h-7" onmousedown="startKnobDrag(event, 'eq-a-low')" ontouchstart="startKnobDrag(event, 'eq-a-low')">
+                  <div id="knob-eq-a-low" class="knob-disk text-cyan-400"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+                <button onclick="toggleEqKill('A', 'low')" id="kill-a-low" class="text-[7px] px-1.5 py-0.2 bg-gray-900 text-gray-400 rounded border border-gray-800 mt-0.5 font-bold">KILL</button>
+              </div>
+              <!-- CFX Filter -->
+              <div class="flex flex-col items-center pt-1 border-t border-cyan-900/40 w-full">
+                <span class="text-[7px] font-bold text-cyan-300">CFX</span>
+                <div class="knob-wrap !w-7 !h-7 mt-0.5" onmousedown="startKnobDrag(event, 'filter-a')" ontouchstart="startKnobDrag(event, 'filter-a')">
+                  <div id="knob-filter-a" class="knob-disk text-cyan-300"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ch B EQ -->
+            <div class="flex flex-col items-center space-y-1.5 pl-1">
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] text-gray-400 font-bold">HI</span>
+                <div class="knob-wrap !w-7 !h-7" onmousedown="startKnobDrag(event, 'eq-b-hi')" ontouchstart="startKnobDrag(event, 'eq-b-hi')">
+                  <div id="knob-eq-b-hi" class="knob-disk text-amber-400"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+                <button onclick="toggleEqKill('B', 'hi')" id="kill-b-hi" class="text-[7px] px-1.5 py-0.2 bg-gray-900 text-gray-400 rounded border border-gray-800 mt-0.5 font-bold">KILL</button>
+              </div>
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] text-gray-400 font-bold">MID</span>
+                <div class="knob-wrap !w-7 !h-7" onmousedown="startKnobDrag(event, 'eq-b-mid')" ontouchstart="startKnobDrag(event, 'eq-b-mid')">
+                  <div id="knob-eq-b-mid" class="knob-disk text-amber-400"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+                <button onclick="toggleEqKill('B', 'mid')" id="kill-b-mid" class="text-[7px] px-1.5 py-0.2 bg-gray-900 text-gray-400 rounded border border-gray-800 mt-0.5 font-bold">KILL</button>
+              </div>
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] text-gray-400 font-bold">LOW</span>
+                <div class="knob-wrap !w-7 !h-7" onmousedown="startKnobDrag(event, 'eq-b-low')" ontouchstart="startKnobDrag(event, 'eq-b-low')">
+                  <div id="knob-eq-b-low" class="knob-disk text-amber-400"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+                <button onclick="toggleEqKill('B', 'low')" id="kill-b-low" class="text-[7px] px-1.5 py-0.2 bg-gray-900 text-gray-400 rounded border border-gray-800 mt-0.5 font-bold">KILL</button>
+              </div>
+              <!-- CFX Filter -->
+              <div class="flex flex-col items-center pt-1 border-t border-amber-900/40 w-full">
+                <span class="text-[7px] font-bold text-amber-300">CFX</span>
+                <div class="knob-wrap !w-7 !h-7 mt-0.5" onmousedown="startKnobDrag(event, 'filter-b')" ontouchstart="startKnobDrag(event, 'filter-b')">
+                  <div id="knob-filter-b" class="knob-disk text-amber-300"><div class="knob-notch !h-1.5"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stereo 8-Segment LED VU Meters -->
+          <div class="sub-chassis p-1.5 rounded-xl border border-gray-800 flex items-center justify-around">
+            <div class="flex flex-col-reverse h-12 w-2 gap-0.5 bg-black p-0.5 rounded">
+              <div id="vu-a-8" class="w-full h-1 bg-red-600/20 rounded-xs"></div>
+              <div id="vu-a-7" class="w-full h-1 bg-yellow-500/20 rounded-xs"></div>
+              <div id="vu-a-6" class="w-full h-1 bg-yellow-500/20 rounded-xs"></div>
+              <div id="vu-a-5" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-a-4" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-a-3" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-a-2" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-a-1" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+            </div>
+
+            <div class="text-[7px] font-mono text-gray-500 text-center leading-tight">
+              <span class="text-red-500 font-bold">CLIP</span><br>
+              <span class="text-emerald-500 font-bold">0dB</span>
+            </div>
+
+            <div class="flex flex-col-reverse h-12 w-2 gap-0.5 bg-black p-0.5 rounded">
+              <div id="vu-b-8" class="w-full h-1 bg-red-600/20 rounded-xs"></div>
+              <div id="vu-b-7" class="w-full h-1 bg-yellow-500/20 rounded-xs"></div>
+              <div id="vu-b-6" class="w-full h-1 bg-yellow-500/20 rounded-xs"></div>
+              <div id="vu-b-5" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-b-4" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-b-3" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-b-2" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+              <div id="vu-b-1" class="w-full h-1 bg-emerald-500/20 rounded-xs"></div>
+            </div>
+          </div>
+
+          <!-- Channel Volume Faders -->
+          <div class="grid grid-cols-2 gap-1.5 sub-chassis p-1.5 rounded-xl border border-gray-800">
+            <div class="flex flex-col items-center">
+              <span class="text-[8px] font-bold text-cyan-400">CH 1</span>
+              <div class="h-18 flex items-center justify-center">
+                <input type="range" id="ch-vol-a" min="0" max="1" step="0.01" value="0.85" orient="vertical" class="fader-channel -rotate-90 origin-center w-16 cursor-pointer" oninput="setChannelVol('A', this.value)">
+              </div>
+            </div>
+            <div class="flex flex-col items-center">
+              <span class="text-[8px] font-bold text-amber-400">CH 2</span>
+              <div class="h-18 flex items-center justify-center">
+                <input type="range" id="ch-vol-b" min="0" max="1" step="0.01" value="0.85" orient="vertical" class="fader-channel -rotate-90 origin-center w-16 cursor-pointer" oninput="setChannelVol('B', this.value)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Crossfader & Curve Mode -->
+          <div class="sub-chassis p-1.5 rounded-xl border border-gray-800 flex flex-col space-y-1">
+            <div class="flex items-center justify-between text-[8px]">
+              <span class="font-bold text-cyan-400">A</span>
+              <select id="xfader-curve" onchange="setCrossfaderCurve(this.value)" class="bg-gray-900 text-gray-300 text-[8px] rounded px-1 py-0.5 border border-gray-700 outline-none">
+                <option value="linear">Linear</option>
+                <option value="smooth" selected>Smooth</option>
+                <option value="scratch">Scratch Cut</option>
+              </select>
+              <span class="font-bold text-amber-400">B</span>
+            </div>
+            <input type="range" id="crossfader" min="0" max="100" value="50" class="fader-cross cursor-pointer" oninput="updateCrossfader(this.value)">
+          </div>
+        </section>
+
+        <!-- ==================== RIGHT: DECK B (AMBER / ORANGE) ==================== -->
+        <section id="deck-b-card" class="col-span-5 chassis rounded-2xl p-3 border-t-4 border-t-amber-500 flex flex-col justify-between space-y-3">
+          <!-- Deck B Header & Overview Waveform Scrub Strip -->
+          <div class="sub-chassis rounded-xl p-2 border border-amber-950/70 flex flex-col space-y-1.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 truncate">
+                <span class="px-1.5 py-0.5 rounded font-display font-bold text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40">DECK 2</span>
+                <div class="truncate">
+                  <h2 id="deck-b-title" class="text-xs sm:text-sm font-bold text-white truncate leading-tight">Sunset Deep House</h2>
+                  <p id="deck-b-artist" class="text-[9px] text-gray-400 truncate leading-none">Anjunadeep Sessions &bull; 48kHz Stems</p>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-2 shrink-0">
+                <div class="text-right leading-none">
+                  <span id="deck-b-bpm" class="font-mono text-sm font-extrabold text-amber-400">126.00</span>
+                  <div class="text-[9px] font-mono text-gray-400 mt-0.5">
+                    <span id="deck-b-key" class="text-amber-300 font-bold mr-1">9A</span>
+                    <span id="deck-b-pitch-readout">0.0%</span>
+                  </div>
+                </div>
+                <label class="cursor-pointer bg-gray-800 hover:bg-amber-950 text-amber-400 px-2 py-1 rounded-lg border border-gray-700 text-[10px] font-bold" title="Load Audio">
+                  <i class="fa-solid fa-folder-open"></i>
+                  <input type="file" accept="audio/*" class="hidden" onchange="handleLocalFile(event, 'B')">
+                </label>
+              </div>
+            </div>
+
+            <!-- Full Waveform Scrub -->
+            <div class="relative w-full h-11 bg-black rounded-lg overflow-hidden border border-gray-800 cursor-pointer" onclick="scrubDeckWaveform(event, 'B')">
+              <canvas id="deck-b-waveform" class="w-full h-full block"></canvas>
+              <div id="deck-b-playhead" class="absolute top-0 bottom-0 left-0 w-0 bg-amber-500/10 pointer-events-none border-r-2 border-amber-400 shadow-[0_0_8px_#f59e0b]"></div>
+              <div class="absolute bottom-1 left-1.5 font-mono text-[9px] text-amber-300 bg-black/80 px-1 rounded" id="deck-b-elapsed">00:00.0</div>
+              <div class="absolute bottom-1 right-1.5 font-mono text-[9px] text-gray-400 bg-black/80 px-1 rounded" id="deck-b-remain">-03:45.0</div>
+            </div>
+          </div>
+
+          <!-- Platter & Pitch Tempo Slider Section -->
+          <div class="grid grid-cols-12 gap-2 items-center py-1">
+            <div class="col-span-8 flex justify-center items-center py-2">
+              <div id="jog-wheel-b" class="jog-platter w-44 h-44 sm:w-48 sm:h-48 flex items-center justify-center border-2 border-amber-500/40">
+                <div class="absolute inset-2 rounded-full border border-amber-500/20 pointer-events-none jog-grooves"></div>
+                <!-- Motorized Center Slipmat with Needle -->
+                <div id="jog-center-b" class="w-24 h-24 rounded-full bg-gradient-to-tr from-[#1b0d05] via-[#2a1710] to-[#100704] flex items-center justify-center relative shadow-2xl border-4 border-[#140a07] overflow-hidden">
+                  <div id="needle-b" class="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-amber-400 to-transparent shadow-[0_0_8px_#f59e0b] origin-bottom"></div>
+                  <div class="w-10 h-10 rounded-full bg-black/90 p-0.5 flex flex-col items-center justify-center text-center z-10 border border-amber-500/40">
+                    <span class="text-[7px] font-extrabold text-amber-300 font-display leading-tight">CDJ-3000</span>
+                    <span class="text-[6px] font-mono text-gray-400">33 RPM</span>
+                  </div>
+                </div>
+                <span class="absolute bottom-2 text-[8px] font-mono text-amber-400/80 tracking-widest pointer-events-none">VINYL SCRATCH</span>
+              </div>
+            </div>
+
+            <!-- Vertical Pitch Slider -->
+            <div class="col-span-4 flex flex-col items-center justify-between h-48 sub-chassis rounded-xl p-2 border border-gray-800">
+              <div class="flex items-center justify-between w-full px-1">
+                <span class="text-[8px] font-bold text-gray-400">TEMPO</span>
+                <button onclick="cyclePitchRange('B')" id="pitch-range-b" class="text-[8px] px-1.5 py-0.5 bg-gray-800 text-amber-300 rounded border border-gray-700 font-mono font-bold">&plusmn;8%</button>
+              </div>
+
+              <div class="flex-1 flex items-center justify-center my-1">
+                <input type="range" id="deck-b-tempo-fader" min="-8" max="8" step="0.05" value="0" orient="vertical" class="pitch-slider -rotate-90 origin-center w-28 cursor-pointer" oninput="setDeckTempo('B', this.value)">
+              </div>
+
+              <div class="grid grid-cols-2 gap-1 w-full">
+                <button onclick="resetPitch('B')" class="text-[8px] bg-gray-800 text-gray-300 py-1 rounded border border-gray-700 active:scale-95 font-mono">0.0%</button>
+                <button id="master-tempo-b" onclick="toggleMasterTempo('B')" class="text-[8px] bg-amber-950 text-amber-300 py-1 rounded border border-amber-800 font-bold active:scale-95">KEY</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pioneer CUE, PLAY/PAUSE, SYNC & Nudge Row -->
+          <div class="grid grid-cols-12 gap-2 items-center pt-2 border-t border-gray-800/80">
+            <div class="col-span-3 flex justify-center">
+              <button id="cdj-cue-b" onclick="handleCue('B')" class="cdj-btn bg-gradient-to-b from-cyan-600 via-cyan-700 to-cyan-900 border border-cyan-400/60 text-white">
+                <span class="text-xs font-display font-extrabold text-cyan-200">CUE</span>
+              </button>
+            </div>
+
+            <div class="col-span-3 flex justify-center">
+              <button id="cdj-play-b" onclick="togglePlay('B')" class="cdj-btn bg-gradient-to-b from-amber-600 via-amber-700 to-amber-900 border border-amber-400/60 text-white">
+                <span id="play-icon-b" class="text-xs font-display font-extrabold flex items-center space-x-1">
+                  <i class="fa-solid fa-play"></i>
+                </span>
+              </button>
+            </div>
+
+            <div class="col-span-6 grid grid-cols-3 gap-1">
+              <button onclick="syncDeck('B')" class="h-12 rounded-lg bg-gray-900 hover:bg-amber-950 border border-amber-800 text-amber-300 flex flex-col items-center justify-center font-display font-bold active:scale-95 transition">
+                <span class="text-xs">SYNC</span>
+              </button>
+              <button onclick="nudgePitch('B', -0.5)" class="h-12 rounded-lg bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 flex items-center justify-center font-mono text-sm active:scale-95 transition">
+                <span>&minus;</span>
+              </button>
+              <button onclick="nudgePitch('B', 0.5)" class="h-12 rounded-lg bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-300 flex items-center justify-center font-mono text-sm active:scale-95 transition">
+                <span>&plus;</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 8-Pad Performance Modes -->
+          <div class="sub-chassis rounded-xl p-2 border border-gray-800 flex flex-col space-y-2 mt-1">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-1">
+              <div class="flex space-x-1 text-[9px] font-bold">
+                <button onclick="switchPadMode('B', 'hotcue')" id="pad-mode-b-hotcue" class="px-2 py-0.5 rounded bg-amber-900 text-amber-200 border border-amber-700">HOT CUE</button>
+                <button onclick="switchPadMode('B', 'loop')" id="pad-mode-b-loop" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">LOOP</button>
+                <button onclick="switchPadMode('B', 'stems')" id="pad-mode-b-stems" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">STEMS</button>
+                <button onclick="switchPadMode('B', 'sampler')" id="pad-mode-b-sampler" class="px-2 py-0.5 rounded bg-gray-800 text-gray-400">SAMPLER</button>
+              </div>
+              <span class="text-[8px] font-mono text-gray-400 uppercase" id="pad-sublabel-b">PADS 1-4</span>
+            </div>
+            <div id="pads-container-b" class="grid grid-cols-4 gap-1.5 min-h-[48px]">
+              <!-- Injected via JavaScript -->
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       4. SLIDE-UP MUSIC DRAWER & SPOTIFY STEMS BROWSER
+       ========================================================================= -->
+  <div id="library-drawer" class="fixed inset-x-0 bottom-0 z-40 transition-transform duration-300 translate-y-full max-h-64 bg-[#0c1017]/95 backdrop-blur-md border-t border-gray-800 flex flex-col shadow-2xl">
+    <div class="px-3 py-2 bg-[#080b10] border-b border-gray-800 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="text-xs font-bold text-white font-display uppercase tracking-wider">Music Library & Stems</span>
+        <button onclick="selectLibraryTab('spotify')" id="tab-btn-spotify" class="px-2.5 py-0.5 rounded bg-[#121c16] text-[#1db954] border border-[#1db954]/50 text-xs font-bold">Spotify</button>
+        <button onclick="selectLibraryTab('local')" id="tab-btn-local" class="px-2.5 py-0.5 rounded bg-gray-900 text-gray-400 border border-gray-800 text-xs">Local Stems</button>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <input type="text" id="library-search" oninput="handleLibrarySearch(this.value)" placeholder="Filter title, BPM or key..." class="bg-black/60 border border-gray-700 rounded px-2 py-1 text-xs text-white w-44 sm:w-64 outline-none">
+        <button onclick="toggleLibraryDrawer(false)" class="text-gray-400 hover:text-white px-2 py-1 text-sm"><i class="fa-solid fa-chevron-down"></i></button>
+      </div>
+    </div>
+
+    <div id="library-content-container" class="p-3 overflow-y-auto max-h-52">
+      <!-- Injected via JavaScript -->
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       5. MODALS: SPOTIFY & GITHUB
+       ========================================================================= -->
+  <!-- SPOTIFY CONNECT MODAL -->
+  <div id="spotify-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-3">
+    <div class="bg-[#10141d] border border-[#1db954]/60 rounded-2xl max-w-md w-full p-5 shadow-2xl relative text-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+        <div class="flex items-center space-x-2">
+          <i class="fa-brands fa-spotify text-[#1db954] text-xl"></i>
+          <h3 class="font-bold text-white text-sm">Spotify Web Playback Integration</h3>
+        </div>
+        <button onclick="closeSpotifyModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="py-3 text-gray-300 space-y-2 leading-relaxed">
+        <p>Connect your Spotify account via <strong>Spotify Web Playback SDK</strong>:</p>
+        <div class="p-2.5 bg-black/70 border border-gray-800 rounded-xl font-mono text-[11px] space-y-1.5">
+          <span class="text-[#1db954] font-bold block">User OAuth Access Token:</span>
+          <input type="text" id="spotify-token-input" placeholder="Bearer BQC..." class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white text-xs outline-none">
+        </div>
+        <p class="text-[11px] text-gray-400">All demo tracks are synthesized locally via Web Audio API oscillators and sample buffers so you can mix without tokens.</p>
+      </div>
+      <div class="flex justify-end space-x-2 pt-3 border-t border-gray-800">
+        <button onclick="closeSpotifyModal()" class="px-3 py-1.5 bg-gray-800 text-gray-200 rounded-lg text-xs font-semibold">Cancel</button>
+        <button onclick="saveSpotifyToken()" class="px-4 py-1.5 bg-[#1db954] text-black font-bold rounded-lg text-xs">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GITHUB FREE HOSTING MODAL -->
+  <div id="github-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-3">
+    <div class="bg-[#111622] border border-cyan-500/50 rounded-2xl max-w-lg w-full p-5 shadow-2xl relative text-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+        <div class="flex items-center space-x-2">
+          <i class="fa-brands fa-github text-white text-xl"></i>
+          <h3 class="font-bold text-white text-sm">Free Hosting on GitHub Pages</h3>
+        </div>
+        <button onclick="toggleGithubModal(false)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <div class="py-3 space-y-2 text-gray-300 text-xs leading-relaxed">
+        <p>1. Save this entire code into a file named <code class="text-cyan-300 font-mono bg-gray-900 px-1.5 py-0.5 rounded">index.html</code>.</p>
+        <p>2. Create a new public repository on GitHub (e.g., <code class="text-white bg-gray-800 px-1.5 py-0.5 rounded font-mono">my-dj-decks</code>).</p>
+        <p>3. Upload or push <code class="text-cyan-300 font-mono">index.html</code> to the root of the repository.</p>
+        <p>4. Go to <strong>Settings &rarr; Pages &rarr; Branch: main / root &rarr; Save</strong>.</p>
+        <p class="text-emerald-400 font-semibold mt-1">Your DJ suite is now live with zero backend costs!</p>
+      </div>
+      <div class="flex justify-end pt-3 border-t border-gray-800">
+        <button onclick="toggleGithubModal(false)" class="px-4 py-1.5 bg-cyan-600 text-white font-bold rounded-lg text-xs">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST -->
+  <div id="toast" class="fixed bottom-14 right-4 bg-gray-900/95 text-white border border-gray-700 px-3.5 py-2 rounded-xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-3 flex items-center space-x-2 z-50 text-xs">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-cyan-400"></i>
+    <span id="toast-text">Action completed</span>
+  </div>
+
+  <!-- =========================================================================
+       6. JAVASCRIPT: AUTO-FIT ENGINE, PINCH-TO-ZOOM, WEB AUDIO DSP
+       ========================================================================= -->
+  <script>
+    /* =========================================================
+       A. AUTO-FIT & DYNAMIC MAGNIFICATION / ZOOM ENGINE
+       ========================================================= */
+    let currentZoom = 1.0;
+    let isAutoFitActive = true;
+    const CONSOLE_BASE_WIDTH = 1220;
+    const CONSOLE_BASE_HEIGHT = 580;
+
+    function applyZoomScale(scale, updateAutoFitFlag = true) {
+      if (updateAutoFitFlag) isAutoFitActive = false;
+      currentZoom = Math.min(2.0, Math.max(0.45, scale));
+
+      const scaler = document.getElementById('scaler-outer-box');
+      if (scaler) {
+        scaler.style.transform = `scale(${currentZoom})`;
+      }
+
+      const readout = document.getElementById('zoom-readout');
+      if (readout) {
+        readout.innerText = `${Math.round(currentZoom * 100)}%`;
+      }
+
+      const autoFitBtn = document.getElementById('btn-autofit');
+      if (autoFitBtn) {
+        if (isAutoFitActive) {
+          autoFitBtn.classList.remove('bg-gray-800', 'text-gray-300', 'border-gray-700');
+          autoFitBtn.classList.add('bg-cyan-950', 'text-cyan-300', 'border-cyan-800');
+        } else {
+          autoFitBtn.classList.remove('bg-cyan-950', 'text-cyan-300', 'border-cyan-800');
+          autoFitBtn.classList.add('bg-gray-800', 'text-gray-300', 'border-gray-700');
+        }
+      }
+    }
+
+    function autoFitScale() {
+      isAutoFitActive = true;
+      const viewport = document.getElementById('zoom-scroll-viewport');
+      if (!viewport) return;
+
+      const availWidth = viewport.clientWidth - 16;
+      const availHeight = viewport.clientHeight - 60; // accommodate bottom HUD
+
+      const scaleX = availWidth / CONSOLE_BASE_WIDTH;
+      const scaleY = availHeight / CONSOLE_BASE_HEIGHT;
+      let targetScale = Math.min(scaleX, scaleY);
+
+      // Clamp target scale between 45% and 130%
+      targetScale = Math.max(0.45, Math.min(1.3, targetScale));
+      applyZoomScale(targetScale, false);
+
+      showToast(`Auto-Fitted to screen: ${Math.round(targetScale * 100)}%`, 'fa-compress');
+    }
+
+    function resetZoom100() {
+      isAutoFitActive = false;
+      applyZoomScale(1.0);
+      showToast("Console scale: 100%", "fa-magnifying-glass");
+    }
+
+    function zoomIn() {
+      applyZoomScale(currentZoom + 0.12);
+    }
+
+    function zoomOut() {
+      applyZoomScale(currentZoom - 0.12);
+    }
+
+    function panToDeck(target) {
+      const viewport = document.getElementById('zoom-scroll-viewport');
+      if (!viewport) return;
+
+      if (target === 'A') {
+        viewport.scrollTo({ left: 0, behavior: 'smooth' });
+      } else if (target === 'B') {
+        viewport.scrollTo({ left: (CONSOLE_BASE_WIDTH * currentZoom), behavior: 'smooth' });
+      } else {
+        const center = ((CONSOLE_BASE_WIDTH * currentZoom) - viewport.clientWidth) / 2;
+        viewport.scrollTo({ left: Math.max(0, center), behavior: 'smooth' });
+      }
+    }
+
+    /* Multi-Touch Pinch-To-Zoom & Ctrl+Wheel */
+    function initPinchToZoom() {
+      const viewport = document.getElementById('zoom-scroll-viewport');
+      let initialDistance = 0;
+      let startScale = 1.0;
+
+      viewport.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          initialDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          startScale = currentZoom;
+        }
+      }, { passive: true });
+
+      viewport.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDistance > 0) {
+          const currentDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          const factor = currentDist / initialDistance;
+          applyZoomScale(startScale * factor);
+        }
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+          initialDistance = 0;
+        }
+      });
+
+      // Desktop Ctrl + MouseWheel Zoom
+      viewport.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+          e.preventDefault();
+          const delta = e.deltaY < 0 ? 0.08 : -0.08;
+          applyZoomScale(currentZoom + delta);
+        }
+      }, { passive: false });
+    }
+
+    /* Orientation handling */
+    let orientationDismissed = false;
+    function checkOrientation() {
+      if (orientationDismissed) return;
+      const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth <= 768;
+      const overlay = document.getElementById('rotate-device-overlay');
+      if (overlay) {
+        overlay.style.display = isPortrait ? 'flex' : 'none';
+      }
+      if (isAutoFitActive) autoFitScale();
+    }
+
+    function dismissOrientationOverlay() {
+      orientationDismissed = true;
+      const overlay = document.getElementById('rotate-device-overlay');
+      if (overlay) overlay.style.display = 'none';
+      autoFitScale();
+      showToast("Auto-fitting portrait viewport. Pinch or zoom as needed.", "fa-arrows-alt");
+    }
+
+    async function requestFullscreenAndLock() {
+      try {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          await document.documentElement.webkitRequestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape');
+        }
+      } catch (err) {
+        console.log("Orientation lock not permitted:", err);
+      }
+      dismissOrientationOverlay();
+    }
+
+    window.addEventListener('resize', () => {
+      checkOrientation();
+      if (isAutoFitActive) autoFitScale();
+    });
+
+    /* =========================================================
+       B. WEB AUDIO API DSP ENGINE
+       ========================================================= */
+    let audioCtx = null;
+    let masterGain = null;
+    let masterAnalyser = null;
+    let crossfaderGainA = null;
+    let crossfaderGainB = null;
+    let xfaderCurveMode = 'smooth';
+
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let recTimerInterval = null;
+    let recSeconds = 0;
+
+    const spotifyCatalog = [
+      { id: 'sp_1', title: 'Berlin Dark Techno', artist: 'Charlotte & Amelie', bpm: 126.0, key: '8A', cover: 'bg-indigo-900', style: 'techno' },
+      { id: 'sp_2', title: 'Sunset Deep House', artist: 'Anjunadeep Sessions', bpm: 126.0, key: '9A', cover: 'bg-amber-900', style: 'house' },
+      { id: 'sp_3', title: 'London Drill Pressure', artist: 'Central Heat Stems', bpm: 140.0, key: '4A', cover: 'bg-cyan-900', style: 'drill' },
+      { id: 'sp_4', title: 'Peak Time Acid Trance', artist: 'Armin & Tiesto', bpm: 132.0, key: '11B', cover: 'bg-rose-900', style: 'techno' }
+    ];
+
+    let currentLibraryTab = 'spotify';
+
+    const decks = {
+      A: {
+        id: 'A',
+        title: 'Berlin Dark Techno',
+        artist: 'Charlotte & Amelie',
+        bpm: 126.0,
+        originalBpm: 126.0,
+        camelotKey: '8A',
+        pitchRange: 8,
+        pitchPercent: 0,
+        playbackRate: 1.0,
+        masterTempo: true,
+        buffer: null,
+        source: null,
+        isPlaying: false,
+        startedAt: 0,
+        pausedAt: 0,
+        cuePoint: 0,
+        hotCues: [null, null, null, null],
+        loopActive: false,
+        loopBeats: null,
+        loopStart: 0,
+        loopEnd: 0,
+        padMode: 'hotcue',
+        stemsMuted: { drums: false, bass: false, harmonic: false, vocals: false },
+        turntableRotation: 0,
+        isScratching: false,
+        wasPlayingBeforeScratch: false,
+        gainNode: null,
+        eqHi: null,
+        eqMid: null,
+        eqLow: null,
+        filterNode: null,
+        channelGainNode: null,
+        analyser: null,
+        eqKills: { hi: false, mid: false, low: false },
+        peaks: [],
+        canvas: null,
+        canvasCtx: null
+      },
+      B: {
+        id: 'B',
+        title: 'Sunset Deep House',
+        artist: 'Anjunadeep Sessions',
+        bpm: 126.0,
+        originalBpm: 126.0,
+        camelotKey: '9A',
+        pitchRange: 8,
+        pitchPercent: 0,
+        playbackRate: 1.0,
+        masterTempo: true,
+        buffer: null,
+        source: null,
+        isPlaying: false,
+        startedAt: 0,
+        pausedAt: 0,
+        cuePoint: 0,
+        hotCues: [null, null, null, null],
+        loopActive: false,
+        loopBeats: null,
+        loopStart: 0,
+        loopEnd: 0,
+        padMode: 'hotcue',
+        stemsMuted: { drums: false, bass: false, harmonic: false, vocals: false },
+        turntableRotation: 0,
+        isScratching: false,
+        wasPlayingBeforeScratch: false,
+        gainNode: null,
+        eqHi: null,
+        eqMid: null,
+        eqLow: null,
+        filterNode: null,
+        channelGainNode: null,
+        analyser: null,
+        eqKills: { hi: false, mid: false, low: false },
+        peaks: [],
+        canvas: null,
+        canvasCtx: null
+      }
+    };
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioClass();
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.85;
+
+        masterAnalyser = audioCtx.createAnalyser();
+        masterAnalyser.fftSize = 64;
+
+        crossfaderGainA = audioCtx.createGain();
+        crossfaderGainB = audioCtx.createGain();
+
+        crossfaderGainA.connect(masterGain);
+        crossfaderGainB.connect(masterGain);
+        masterGain.connect(masterAnalyser);
+        masterAnalyser.connect(audioCtx.destination);
+
+        initDeckDsp('A', crossfaderGainA);
+        initDeckDsp('B', crossfaderGainB);
+
+        updateCrossfader(50);
+      }
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function initDeckDsp(id, targetGain) {
+      const d = decks[id];
+      d.gainNode = audioCtx.createGain();
+      d.gainNode.gain.value = 1.0;
+
+      d.eqLow = audioCtx.createBiquadFilter();
+      d.eqLow.type = 'lowshelf';
+      d.eqLow.frequency.value = 300;
+      d.eqLow.gain.value = 0;
+
+      d.eqMid = audioCtx.createBiquadFilter();
+      d.eqMid.type = 'peaking';
+      d.eqMid.frequency.value = 1200;
+      d.eqMid.Q.value = 1.0;
+      d.eqMid.gain.value = 0;
+
+      d.eqHi = audioCtx.createBiquadFilter();
+      d.eqHi.type = 'highshelf';
+      d.eqHi.frequency.value = 3500;
+      d.eqHi.gain.value = 0;
+
+      d.filterNode = audioCtx.createBiquadFilter();
+      d.filterNode.type = 'allpass';
+      d.filterNode.frequency.value = 1000;
+
+      d.channelGainNode = audioCtx.createGain();
+      d.channelGainNode.gain.value = 0.85;
+
+      d.analyser = audioCtx.createAnalyser();
+      d.analyser.fftSize = 64;
+
+      d.gainNode.connect(d.eqLow);
+      d.eqLow.connect(d.eqMid);
+      d.eqMid.connect(d.eqHi);
+      d.eqHi.connect(d.filterNode);
+      d.filterNode.connect(d.channelGainNode);
+      d.channelGainNode.connect(d.analyser);
+      d.analyser.connect(targetGain);
+    }
+
+    /* Client-Side Procedural Stems Synthesizer */
+    function synthesizeClubTrack(ctx, bpm = 126, style = 'house') {
+      const sampleRate = ctx.sampleRate;
+      const beatSec = 60 / bpm;
+      const totalBars = 8;
+      const totalSec = totalBars * 4 * beatSec;
+      const length = Math.floor(sampleRate * totalSec);
+      const buffer = ctx.createBuffer(2, length, sampleRate);
+      const left = buffer.getChannelData(0);
+      const right = buffer.getChannelData(1);
+      const totalBeats = totalBars * 4;
+
+      for (let b = 0; b < totalBeats; b++) {
+        const beatStart = Math.floor(b * beatSec * sampleRate);
+
+        // 909 Kick
+        for (let i = beatStart; i < Math.min(beatStart + sampleRate * 0.28, length); i++) {
+          const t = (i - beatStart) / sampleRate;
+          const kickFreq = 160 * Math.exp(-t * 26) + 40;
+          const kickVal = Math.sin(2 * Math.PI * kickFreq * t) * Math.exp(-t * 14) * 0.85;
+          left[i] += kickVal;
+          right[i] += kickVal;
+        }
+
+        // Open Hat
+        const hatStart = Math.floor((b + 0.5) * beatSec * sampleRate);
+        for (let i = hatStart; i < Math.min(hatStart + sampleRate * 0.1, length); i++) {
+          const t = (i - hatStart) / sampleRate;
+          const noise = (Math.random() * 2 - 1) * Math.exp(-t * 38) * 0.26;
+          left[i] += noise * 0.9;
+          right[i] += noise * 0.7;
+        }
+
+        // Clap on 2 & 4
+        if (b % 2 === 1) {
+          for (let i = beatStart; i < Math.min(beatStart + sampleRate * 0.18, length); i++) {
+            const t = (i - beatStart) / sampleRate;
+            const clap = (Math.random() * 2 - 1) * Math.exp(-t * 18) * 0.38;
+            left[i] += clap * 0.8;
+            right[i] += clap;
+          }
+        }
+      }
+
+      // Rolling Synth & Sub Bassline
+      for (let i = 0; i < length; i++) {
+        const t = i / sampleRate;
+        const curBeat = t / beatSec;
+        const noteIndex = Math.floor(curBeat * 2) % 8;
+        const root = (style === 'house') ? 55 : (style === 'drill' ? 46.25 : 43.65);
+        const scale = [0, 3, 5, 7, 10, 12, 10, 7];
+        const freq = root * Math.pow(2, scale[noteIndex] / 12);
+        const bassEnv = Math.max(0, 1 - ((curBeat * 2) % 1));
+        const val = Math.sin(2 * Math.PI * freq * t) * 0.28 * bassEnv;
+        left[i] += val;
+        right[i] += val;
+      }
+
+      // Peak Normalization
+      for (let c = 0; c < 2; c++) {
+        const d = buffer.getChannelData(c);
+        let max = 0;
+        for (let i = 0; i < length; i++) if (Math.abs(d[i]) > max) max = Math.abs(d[i]);
+        if (max > 0.95) {
+          const ratio = 0.95 / max;
+          for (let i = 0; i < length; i++) d[i] *= ratio;
+        }
+      }
+      return buffer;
+    }
+
+    function playSamplerDrop(type) {
+      ensureAudioContext();
+      const now = audioCtx.currentTime;
+
+      if (type === 'airhorn') {
+        [466.16, 554.37, 622.25].forEach(f => {
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(f, now);
+          osc.frequency.linearRampToValueAtTime(f * 1.05, now + 0.1);
+          g.gain.setValueAtTime(0.22, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc.connect(g);
+          g.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.48);
+        });
+      } else if (type === 'siren') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(500, now);
+        osc.frequency.linearRampToValueAtTime(1300, now + 0.25);
+        osc.frequency.linearRampToValueAtTime(500, now + 0.5);
+        g.gain.setValueAtTime(0.3, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.55);
+      } else if (type === 'laser') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1600, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+        g.gain.setValueAtTime(0.35, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === 'subdrop') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 1.1);
+        g.gain.setValueAtTime(0.75, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 1.2);
+      }
+      showToast(`Triggered: ${type.toUpperCase()}`, 'fa-drum');
+    }
+
+    function analyzeWaveformPeaks(id) {
+      const d = decks[id];
+      if (!d.buffer) return;
+      const data = d.buffer.getChannelData(0);
+      const totalPoints = 260;
+      const step = Math.floor(data.length / totalPoints);
+      d.peaks = [];
+
+      for (let i = 0; i < totalPoints; i++) {
+        let max = 0;
+        const start = i * step;
+        for (let j = 0; j < step; j += 4) {
+          const val = Math.abs(data[start + j]);
+          if (val > max) max = val;
+        }
+        d.peaks.push(max);
+      }
+    }
+
+    /* Deck Transport & Loops */
+    function togglePlay(id) {
+      ensureAudioContext();
+      const d = decks[id];
+      if (!d.buffer) {
+        showToast(`Load a track onto Deck ${id}!`, 'fa-triangle-exclamation');
+        return;
+      }
+      if (d.isPlaying) {
+        pauseDeck(id);
+      } else {
+        playDeck(id);
+      }
+    }
+
+    function playDeck(id) {
+      const d = decks[id];
+      if (d.isPlaying) return;
+
+      d.source = audioCtx.createBufferSource();
+      d.source.buffer = d.buffer;
+      d.source.playbackRate.value = d.playbackRate;
+      d.source.connect(d.gainNode);
+
+      if (d.loopActive && d.loopEnd > d.loopStart) {
+        d.source.loop = true;
+        d.source.loopStart = d.loopStart;
+        d.source.loopEnd = d.loopEnd;
+      }
+
+      const offset = d.pausedAt % d.buffer.duration;
+      d.startedAt = audioCtx.currentTime - (offset / d.playbackRate);
+      d.source.start(0, offset);
+      d.isPlaying = true;
+
+      d.source.onended = () => {
+        if (!d.isScratching && d.isPlaying && !d.loopActive) {
+          d.isPlaying = false;
+          d.pausedAt = 0;
+          updateTransportUI(id);
+        }
+      };
+
+      updateTransportUI(id);
+    }
+
+    function pauseDeck(id) {
+      const d = decks[id];
+      if (!d.isPlaying) return;
+
+      const elapsed = (audioCtx.currentTime - d.startedAt) * d.playbackRate;
+      d.pausedAt = elapsed % (d.buffer ? d.buffer.duration : 1);
+
+      if (d.source) {
+        try { d.source.stop(); } catch(e) {}
+        d.source.disconnect();
+        d.source = null;
+      }
+      d.isPlaying = false;
+      updateTransportUI(id);
+    }
+
+    function updateTransportUI(id) {
+      const d = decks[id];
+      const prefix = id.toLowerCase();
+      const playBtn = document.getElementById(`cdj-play-${prefix}`);
+      const playIcon = document.getElementById(`play-icon-${prefix}`);
+      const cueBtn = document.getElementById(`cdj-cue-${prefix}`);
+
+      if (d.isPlaying) {
+        playIcon.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+        playBtn.classList.add(id === 'A' ? 'glow-a' : 'glow-b');
+        cueBtn.classList.remove('animate-pulse');
+      } else {
+        playIcon.innerHTML = `<i class="fa-solid fa-play"></i>`;
+        playBtn.classList.remove('glow-a', 'glow-b');
+        cueBtn.classList.add('animate-pulse');
+      }
+    }
+
+    function handleCue(id) {
+      ensureAudioContext();
+      const d = decks[id];
+      if (!d.buffer) return;
+
+      if (d.isPlaying) {
+        pauseDeck(id);
+        d.pausedAt = d.cuePoint;
+      } else {
+        d.cuePoint = d.pausedAt;
+        showToast(`Deck ${id}: CUE point stored`, 'fa-location-dot');
+      }
+    }
+
+    function switchPadMode(id, mode) {
+      const d = decks[id];
+      d.padMode = mode;
+      const prefix = id.toLowerCase();
+
+      ['hotcue', 'loop', 'stems', 'sampler'].forEach(m => {
+        const btn = document.getElementById(`pad-mode-${prefix}-${m}`);
+        if (!btn) return;
+        if (m === mode) {
+          btn.className = `px-2 py-0.5 rounded ${id === 'A' ? 'bg-cyan-900 text-cyan-200 border border-cyan-700' : 'bg-amber-900 text-amber-200 border border-amber-700'}`;
+        } else {
+          btn.className = 'px-2 py-0.5 rounded bg-gray-800 text-gray-400';
+        }
+      });
+
+      renderPerformancePads(id);
+    }
+
+    function renderPerformancePads(id) {
+      const d = decks[id];
+      const container = document.getElementById(`pads-container-${id.toLowerCase()}`);
+      const sublabel = document.getElementById(`pad-sublabel-${id.toLowerCase()}`);
+
+      if (d.padMode === 'hotcue') {
+        sublabel.innerText = 'HOT CUES 1 - 4';
+        const colors = [
+          'bg-cyan-900/60 text-cyan-300 border-cyan-700',
+          'bg-blue-900/60 text-blue-300 border-blue-700',
+          'bg-purple-900/60 text-purple-300 border-purple-700',
+          'bg-pink-900/60 text-pink-300 border-pink-700'
+        ];
+
+        container.innerHTML = d.hotCues.map((cue, idx) => `
+          <button onclick="triggerHotCue('${id}', ${idx})" class="h-9 rounded-lg border ${cue !== null ? 'font-bold text-white ' + colors[idx].replace('/60', '') : colors[idx]} text-xs font-mono transition active:scale-95 flex flex-col items-center justify-center">
+            <span>C${idx + 1}</span>
+            <span class="text-[8px] opacity-80">${cue !== null ? formatTime(cue) : 'SET'}</span>
+          </button>
+        `).join('');
+
+      } else if (d.padMode === 'loop') {
+        sublabel.innerText = 'AUTO BEAT LOOP';
+        const loops = [0.5, 1, 2, 4];
+        const loopLabels = ['1/2', '1', '2', '4'];
+
+        container.innerHTML = loops.map((beats, idx) => `
+          <button onclick="triggerBeatLoop('${id}', ${beats})" class="h-9 rounded-lg border ${d.loopActive && d.loopBeats === beats ? (id === 'A' ? 'bg-cyan-600 text-white border-cyan-400 font-bold' : 'bg-amber-600 text-white border-amber-400 font-bold') : 'bg-gray-900 border-gray-700 text-gray-300'} text-xs font-mono transition active:scale-95 flex flex-col items-center justify-center">
+            <span>${loopLabels[idx]}</span>
+            <span class="text-[8px] text-gray-400">BEAT</span>
+          </button>
+        `).join('');
+
+      } else if (d.padMode === 'stems') {
+        sublabel.innerText = 'NEURAL STEMS ISOLATION';
+        const stems = [
+          { name: 'VOCALS', type: 'vocals', icon: 'fa-microphone' },
+          { name: 'BASS', type: 'bass', icon: 'fa-wave-square' },
+          { name: 'MELODY', type: 'harmonic', icon: 'fa-music' },
+          { name: 'DRUMS', type: 'drums', icon: 'fa-drum' }
+        ];
+
+        container.innerHTML = stems.map(s => `
+          <button onclick="toggleStemMute('${id}', '${s.type}')" class="h-9 rounded-lg border ${d.stemsMuted[s.type] ? 'bg-red-900/70 border-red-700 text-red-200 line-through' : 'bg-gray-900 hover:bg-gray-800 border-gray-700 text-gray-200'} text-xs font-mono transition active:scale-95 flex flex-col items-center justify-center">
+            <i class="fa-solid ${s.icon} text-[9px]"></i>
+            <span class="text-[8px] font-bold mt-0.5">${s.name}</span>
+          </button>
+        `).join('');
+
+      } else if (d.padMode === 'sampler') {
+        sublabel.innerText = 'PRO FX SAMPLER';
+        const drops = [
+          { name: 'HORN', sample: 'airhorn', icon: 'fa-bullhorn' },
+          { name: 'SIREN', sample: 'siren', icon: 'fa-triangle-exclamation' },
+          { name: 'LASER', sample: 'laser', icon: 'fa-bolt' },
+          { name: 'SUB DROP', sample: 'subdrop', icon: 'fa-meteor' }
+        ];
+
+        container.innerHTML = drops.map(s => `
+          <button onclick="playSamplerDrop('${s.sample}')" class="h-9 rounded-lg border bg-gray-900 hover:bg-gray-800 border-gray-700 text-cyan-300 text-xs font-mono transition active:scale-95 flex flex-col items-center justify-center">
+            <i class="fa-solid ${s.icon} text-[9px]"></i>
+            <span class="text-[8px] font-bold mt-0.5">${s.name}</span>
+          </button>
+        `).join('');
+      }
+    }
+
+    function triggerHotCue(id, idx) {
+      ensureAudioContext();
+      const d = decks[id];
+      if (!d.buffer) return;
+
+      if (d.hotCues[idx] !== null) {
+        d.pausedAt = d.hotCues[idx];
+        if (d.isPlaying) {
+          pauseDeck(id);
+          playDeck(id);
+        } else {
+          playDeck(id);
+        }
+      } else {
+        const cur = d.isPlaying ? ((audioCtx.currentTime - d.startedAt) * d.playbackRate) : d.pausedAt;
+        d.hotCues[idx] = cur;
+        renderPerformancePads(id);
+        showToast(`Deck ${id}: Hot Cue ${idx + 1} Set`, 'fa-bookmark');
+      }
+    }
+
+    function triggerBeatLoop(id, beats) {
+      ensureAudioContext();
+      const d = decks[id];
+      if (!d.buffer) return;
+
+      if (d.loopActive && d.loopBeats === beats) {
+        d.loopActive = false;
+        d.loopBeats = null;
+        if (d.isPlaying) {
+          const cur = (audioCtx.currentTime - d.startedAt) * d.playbackRate;
+          pauseDeck(id);
+          d.pausedAt = cur;
+          playDeck(id);
+        }
+      } else {
+        d.loopActive = true;
+        d.loopBeats = beats;
+        const beatSec = 60 / d.bpm;
+        const loopLen = beats * beatSec;
+        const cur = d.isPlaying ? ((audioCtx.currentTime - d.startedAt) * d.playbackRate) : d.pausedAt;
+        d.loopStart = cur;
+        d.loopEnd = cur + loopLen;
+
+        if (d.isPlaying) {
+          pauseDeck(id);
+          d.pausedAt = cur;
+          playDeck(id);
+        }
+      }
+      renderPerformancePads(id);
+    }
+
+    function toggleStemMute(id, stemType) {
+      ensureAudioContext();
+      const d = decks[id];
+      d.stemsMuted[stemType] = !d.stemsMuted[stemType];
+
+      if (stemType === 'bass') {
+        d.eqLow.gain.setValueAtTime(d.stemsMuted[stemType] ? -45 : 0, audioCtx.currentTime);
+      } else if (stemType === 'vocals') {
+        d.eqMid.gain.setValueAtTime(d.stemsMuted[stemType] ? -35 : 0, audioCtx.currentTime);
+      }
+
+      renderPerformancePads(id);
+      showToast(`Deck ${id}: ${stemType.toUpperCase()} ${d.stemsMuted[stemType] ? 'MUTED' : 'ON'}`, 'fa-sliders');
+    }
+
+    /* Jog Wheel Vinyl Scratching */
+    function initJogWheel(id) {
+      const wheel = document.getElementById(`jog-wheel-${id.toLowerCase()}`);
+      const d = decks[id];
+      let isDragging = false;
+      let lastAngle = 0;
+      let lastTime = 0;
+
+      function getAngle(e) {
+        const rect = wheel.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return Math.atan2(clientY - cy, clientX - cx);
+      }
+
+      function onStart(e) {
+        ensureAudioContext();
+        isDragging = true;
+        d.isScratching = true;
+        lastAngle = getAngle(e);
+        lastTime = performance.now();
+
+        if (d.isPlaying) {
+          pauseDeck(id);
+          d.wasPlayingBeforeScratch = true;
+        } else {
+          d.wasPlayingBeforeScratch = false;
+        }
+      }
+
+      function onMove(e) {
+        if (!isDragging) return;
+        const currentAngle = getAngle(e);
+        let delta = currentAngle - lastAngle;
+
+        if (delta > Math.PI) delta -= 2 * Math.PI;
+        if (delta < -Math.PI) delta += 2 * Math.PI;
+
+        const now = performance.now();
+        const dt = (now - lastTime) / 1000;
+
+        d.turntableRotation += delta;
+        const centerDisk = document.getElementById(`jog-center-${id.toLowerCase()}`);
+        if (centerDisk) centerDisk.style.transform = `rotate(${d.turntableRotation}rad)`;
+
+        const vel = dt > 0 ? (delta / dt) : 0;
+        if (Math.abs(vel) > 0.4) {
+          playScratchAcoustics(vel);
+        }
+
+        if (d.buffer) {
+          d.pausedAt = Math.max(0, Math.min(d.buffer.duration, d.pausedAt + (delta * 0.75)));
+        }
+
+        lastAngle = currentAngle;
+        lastTime = now;
+      }
+
+      function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        d.isScratching = false;
+
+        if (d.wasPlayingBeforeScratch) {
+          playDeck(id);
+        }
+      }
+
+      wheel.addEventListener('mousedown', onStart);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+
+      wheel.addEventListener('touchstart', onStart, { passive: false });
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+    }
+
+    let lastScratchTone = 0;
+    function playScratchAcoustics(vel) {
+      const now = performance.now();
+      if (now - lastScratchTone < 60 || !audioCtx) return;
+      lastScratchTone = now;
+
+      const t = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+
+      osc.type = 'sawtooth';
+      const freq = Math.min(1900, Math.max(90, Math.abs(vel) * 140));
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.linearRampToValueAtTime(freq * 0.7, t + 0.08);
+
+      g.gain.setValueAtTime(0.18, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+
+      osc.connect(g);
+      g.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.09);
+    }
+
+    /* Knobs & Filter DSP */
+    const knobValues = {
+      'gain-a': 1.0,
+      'eq-a-hi': 0,
+      'eq-a-mid': 0,
+      'eq-a-low': 0,
+      'filter-a': 0.5,
+      'gain-b': 1.0,
+      'eq-b-hi': 0,
+      'eq-b-mid': 0,
+      'eq-b-low': 0,
+      'filter-b': 0.5
+    };
+
+    let activeKnob = null;
+    let knobStartY = 0;
+    let knobStartVal = 0;
+
+    function startKnobDrag(e, key) {
+      e.preventDefault();
+      ensureAudioContext();
+      activeKnob = key;
+      knobStartY = e.touches ? e.touches[0].clientY : e.clientY;
+      knobStartVal = knobValues[key];
+
+      window.addEventListener('mousemove', handleKnobMove);
+      window.addEventListener('mouseup', endKnobDrag);
+      window.addEventListener('touchmove', handleKnobMove, { passive: false });
+      window.addEventListener('touchend', endKnobDrag);
+    }
+
+    function handleKnobMove(e) {
+      if (!activeKnob) return;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const deltaY = knobStartY - clientY;
+      let val = 0;
+
+      if (activeKnob.includes('eq')) {
+        val = Math.max(-26, Math.min(12, knobStartVal + deltaY * 0.28));
+      } else {
+        val = Math.max(0, Math.min(1.0, knobStartVal + deltaY * 0.006));
+      }
+
+      knobValues[activeKnob] = val;
+      applyKnobDsp(activeKnob, val);
+    }
+
+    function endKnobDrag() {
+      activeKnob = null;
+      window.removeEventListener('mousemove', handleKnobMove);
+      window.removeEventListener('mouseup', endKnobDrag);
+      window.removeEventListener('touchmove', handleKnobMove);
+      window.removeEventListener('touchend', endKnobDrag);
+    }
+
+    function applyKnobDsp(key, val) {
+      const knobEl = document.getElementById(`knob-${key}`);
+      let deg = key.includes('eq') ? ((val / 26) * 135) : ((val - 0.5) * 270);
+      if (knobEl) knobEl.style.transform = `rotate(${deg}deg)`;
+
+      if (key === 'gain-a' && decks.A.gainNode) {
+        decks.A.gainNode.gain.value = val * 1.5;
+      } else if (key === 'gain-b' && decks.B.gainNode) {
+        decks.B.gainNode.gain.value = val * 1.5;
+      } else if (key === 'eq-a-hi' && decks.A.eqHi) {
+        if (!decks.A.eqKills.hi) decks.A.eqHi.gain.value = val;
+      } else if (key === 'eq-a-mid' && decks.A.eqMid) {
+        if (!decks.A.eqKills.mid) decks.A.eqMid.gain.value = val;
+      } else if (key === 'eq-a-low' && decks.A.eqLow) {
+        if (!decks.A.eqKills.low) decks.A.eqLow.gain.value = val;
+      } else if (key === 'eq-b-hi' && decks.B.eqHi) {
+        if (!decks.B.eqKills.hi) decks.B.eqHi.gain.value = val;
+      } else if (key === 'eq-b-mid' && decks.B.eqMid) {
+        if (!decks.B.eqKills.mid) decks.B.eqMid.gain.value = val;
+      } else if (key === 'eq-b-low' && decks.B.eqLow) {
+        if (!decks.B.eqKills.low) decks.B.eqLow.gain.value = val;
+      } else if (key === 'filter-a' && decks.A.filterNode) {
+        sweepFilterNode(decks.A.filterNode, val);
+      } else if (key === 'filter-b' && decks.B.filterNode) {
+        sweepFilterNode(decks.B.filterNode, val);
+      }
+    }
+
+    function sweepFilterNode(filterNode, val) {
+      if (!audioCtx) return;
+      if (val < 0.47) {
+        filterNode.type = 'lowpass';
+        const freq = 180 + Math.pow(val / 0.47, 2) * 19800;
+        filterNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      } else if (val > 0.53) {
+        filterNode.type = 'highpass';
+        const freq = 20 + Math.pow((val - 0.53) / 0.47, 2) * 11500;
+        filterNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      } else {
+        filterNode.type = 'allpass';
+      }
+    }
+
+    function toggleEqKill(id, band) {
+      ensureAudioContext();
+      const d = decks[id];
+      d.eqKills[band] = !d.eqKills[band];
+      const btn = document.getElementById(`kill-${id.toLowerCase()}-${band}`);
+      let node = band === 'hi' ? d.eqHi : (band === 'mid' ? d.eqMid : d.eqLow);
+
+      if (d.eqKills[band]) {
+        btn.classList.add('bg-red-600', 'text-white', 'border-red-500');
+        node.gain.setValueAtTime(-60, audioCtx.currentTime);
+      } else {
+        btn.classList.remove('bg-red-600', 'text-white', 'border-red-500');
+        node.gain.setValueAtTime(knobValues[`eq-${id.toLowerCase()}-${band}`], audioCtx.currentTime);
+      }
+    }
+
+    function setChannelVol(id, val) {
+      ensureAudioContext();
+      const d = decks[id];
+      if (d.channelGainNode) {
+        d.channelGainNode.gain.setValueAtTime(parseFloat(val), audioCtx.currentTime);
+      }
+    }
+
+    function updateCrossfader(val) {
+      if (!crossfaderGainA || !crossfaderGainB) return;
+      const x = parseFloat(val) / 100;
+
+      if (xfaderCurveMode === 'linear') {
+        crossfaderGainA.gain.value = 1 - x;
+        crossfaderGainB.gain.value = x;
+      } else if (xfaderCurveMode === 'smooth') {
+        crossfaderGainA.gain.value = Math.cos(x * 0.5 * Math.PI);
+        crossfaderGainB.gain.value = Math.sin(x * 0.5 * Math.PI);
+      } else if (xfaderCurveMode === 'scratch') {
+        crossfaderGainA.gain.value = x > 0.94 ? 0 : 1;
+        crossfaderGainB.gain.value = x < 0.06 ? 0 : 1;
+      }
+    }
+
+    function setCrossfaderCurve(mode) {
+      xfaderCurveMode = mode;
+      updateCrossfader(document.getElementById('crossfader').value);
+    }
+
+    /* Pitch & Tempo */
+    function setDeckTempo(id, val) {
+      const d = decks[id];
+      d.pitchPercent = parseFloat(val);
+      d.playbackRate = 1.0 + (d.pitchPercent / 100);
+      d.bpm = d.originalBpm * d.playbackRate;
+
+      if (d.source && d.source.playbackRate) {
+        d.source.playbackRate.setValueAtTime(d.playbackRate, audioCtx.currentTime);
+      }
+
+      const prefix = id.toLowerCase();
+      document.getElementById(`deck-${prefix}-bpm`).innerText = d.bpm.toFixed(2);
+      document.getElementById(`deck-${prefix}-pitch-readout`).innerText = `${d.pitchPercent > 0 ? '+' : ''}${d.pitchPercent.toFixed(1)}%`;
+
+      const delta = Math.abs(decks.A.bpm - decks.B.bpm);
+      document.getElementById('bpm-delta-display').innerText = delta.toFixed(1);
+    }
+
+    function resetPitch(id) {
+      const fader = document.getElementById(`deck-${id.toLowerCase()}-tempo-fader`);
+      fader.value = 0;
+      setDeckTempo(id, 0);
+    }
+
+    function cyclePitchRange(id) {
+      const d = decks[id];
+      const ranges = [8, 16, 50];
+      const nextIdx = (ranges.indexOf(d.pitchRange) + 1) % ranges.length;
+      d.pitchRange = ranges[nextIdx];
+
+      const fader = document.getElementById(`deck-${id.toLowerCase()}-tempo-fader`);
+      fader.min = -d.pitchRange;
+      fader.max = d.pitchRange;
+      document.getElementById(`pitch-range-${id.toLowerCase()}`).innerText = `±${d.pitchRange}%`;
+      showToast(`Deck ${id} Range: ±${d.pitchRange}%`, 'fa-gauge-high');
+    }
+
+    function toggleMasterTempo(id) {
+      const d = decks[id];
+      d.masterTempo = !d.masterTempo;
+      const btn = document.getElementById(`master-tempo-${id.toLowerCase()}`);
+      btn.classList.toggle('bg-cyan-950', d.masterTempo);
+      btn.classList.toggle('text-cyan-300', d.masterTempo);
+      showToast(`Deck ${id} Key Lock: ${d.masterTempo ? 'ON' : 'OFF'}`, 'fa-lock');
+    }
+
+    function syncDeck(id) {
+      const otherId = id === 'A' ? 'B' : 'A';
+      const target = decks[id];
+      const source = decks[otherId];
+
+      if (!source.buffer) {
+        showToast(`Deck ${otherId} has no track!`, 'fa-triangle-exclamation');
+        return;
+      }
+
+      const ratio = source.bpm / target.originalBpm;
+      const pitchPercent = (ratio - 1) * 100;
+      const fader = document.getElementById(`deck-${id.toLowerCase()}-tempo-fader`);
+      fader.value = pitchPercent;
+      setDeckTempo(id, pitchPercent);
+      showToast(`Deck ${id} Beatmatched to ${source.bpm.toFixed(1)} BPM!`, 'fa-bolt');
+    }
+
+    function nudgePitch(id, delta) {
+      ensureAudioContext();
+      const d = decks[id];
+      if (d.source && d.isPlaying) {
+        const temp = d.playbackRate + (delta * 0.05);
+        d.source.playbackRate.setValueAtTime(temp, audioCtx.currentTime);
+        setTimeout(() => {
+          if (d.source && d.isPlaying) {
+            d.source.playbackRate.setValueAtTime(d.playbackRate, audioCtx.currentTime);
+          }
+        }, 160);
+      }
+    }
+
+    /* Waveforms & Visuals */
+    function scrubDeckWaveform(e, id) {
+      const d = decks[id];
+      if (!d.buffer) return;
+      const rect = d.canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = clickX / rect.width;
+      d.pausedAt = ratio * d.buffer.duration;
+
+      if (d.isPlaying) {
+        pauseDeck(id);
+        playDeck(id);
+      }
+    }
+
+    function initWaveformCanvases() {
+      ['A', 'B'].forEach(id => {
+        const d = decks[id];
+        d.canvas = document.getElementById(`deck-${id.toLowerCase()}-waveform`);
+        d.canvasCtx = d.canvas.getContext('2d');
+        resizeCanvas(d.canvas);
+      });
+
+      const stackA = document.getElementById('stacked-wave-a');
+      const stackB = document.getElementById('stacked-wave-b');
+      resizeCanvas(stackA);
+      resizeCanvas(stackB);
+
+      window.addEventListener('resize', () => {
+        resizeCanvas(decks.A.canvas);
+        resizeCanvas(decks.B.canvas);
+        resizeCanvas(stackA);
+        resizeCanvas(stackB);
+      });
+    }
+
+    function resizeCanvas(c) {
+      if (!c) return;
+      c.width = c.parentElement.clientWidth * window.devicePixelRatio;
+      c.height = c.parentElement.clientHeight * window.devicePixelRatio;
+    }
+
+    function renderVisualsLoop() {
+      requestAnimationFrame(renderVisualsLoop);
+
+      ['A', 'B'].forEach(id => {
+        const d = decks[id];
+        const prefix = id.toLowerCase();
+
+        if (d.isPlaying && !d.isScratching) {
+          d.turntableRotation += (0.045 * d.playbackRate);
+          const needle = document.getElementById(`needle-${prefix}`);
+          if (needle) needle.style.transform = `rotate(${d.turntableRotation}rad)`;
+        }
+
+        if (d.canvas && d.canvasCtx && d.peaks.length > 0) {
+          const ctx = d.canvasCtx;
+          const w = d.canvas.width;
+          const h = d.canvas.height;
+          ctx.clearRect(0, 0, w, h);
+
+          const curTime = d.isPlaying 
+            ? ((audioCtx.currentTime - d.startedAt) * d.playbackRate) 
+            : d.pausedAt;
+          const duration = d.buffer ? d.buffer.duration : 1;
+          const playRatio = Math.max(0, Math.min(1, curTime / duration));
+
+          const playhead = document.getElementById(`deck-${prefix}-playhead`);
+          if (playhead) playhead.style.width = `${playRatio * 100}%`;
+
+          const barWidth = w / d.peaks.length;
+          for (let i = 0; i < d.peaks.length; i++) {
+            const peak = d.peaks[i];
+            const barH = peak * (h * 0.9);
+            const x = i * barWidth;
+            const y = (h - barH) / 2;
+
+            if (x / w <= playRatio) {
+              ctx.fillStyle = '#ffffff';
+            } else {
+              if (peak > 0.65) ctx.fillStyle = '#ff2255';
+              else if (peak > 0.35) ctx.fillStyle = '#ffaa00';
+              else ctx.fillStyle = id === 'A' ? '#00f0ff' : '#f59e0b';
+            }
+            ctx.fillRect(x, y, Math.max(1, barWidth - 1), barH);
+          }
+
+          document.getElementById(`deck-${prefix}-elapsed`).innerText = formatTime(curTime);
+          document.getElementById(`deck-${prefix}-remain`).innerText = `-${formatTime(Math.max(0, duration - curTime))}`;
+        }
+      });
+
+      const cA = document.getElementById('stacked-wave-a');
+      const cB = document.getElementById('stacked-wave-b');
+      if (cA && cB) {
+        drawRunningWave(cA.getContext('2d'), cA, decks.A, '#00f0ff');
+        drawRunningWave(cB.getContext('2d'), cB, decks.B, '#f59e0b');
+      }
+    }
+
+    function drawRunningWave(ctx, canvas, deck, color) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      if (!deck.buffer || deck.peaks.length === 0) return;
+
+      const curTime = deck.isPlaying 
+        ? ((audioCtx.currentTime - deck.startedAt) * deck.playbackRate) 
+        : deck.pausedAt;
+      const duration = deck.buffer.duration;
+      const curRatio = curTime / duration;
+
+      const centerX = w / 2;
+      const zoom = 4;
+      const totalPoints = deck.peaks.length;
+
+      for (let i = 0; i < totalPoints; i++) {
+        const pointRatio = i / totalPoints;
+        const x = centerX + (pointRatio - curRatio) * (w * zoom);
+        if (x >= 0 && x <= w) {
+          const barH = deck.peaks[i] * (h * 0.85);
+          ctx.fillStyle = (x < centerX) ? '#ffffff' : color;
+          ctx.fillRect(x, (h - barH) / 2, 2.5, barH);
+        }
+      }
+    }
+
+    function startVuMeters() {
+      const dataA = new Uint8Array(32);
+      const dataB = new Uint8Array(32);
+
+      setInterval(() => {
+        if (!audioCtx) return;
+
+        if (decks.A.analyser) {
+          decks.A.analyser.getByteFrequencyData(dataA);
+          let sumA = 0;
+          for (let i = 0; i < dataA.length; i++) sumA += dataA[i];
+          const levelA = Math.min(8, Math.floor((sumA / dataA.length / 255) * 11));
+          updateLedBars('a', levelA);
+        }
+
+        if (decks.B.analyser) {
+          decks.B.analyser.getByteFrequencyData(dataB);
+          let sumB = 0;
+          for (let i = 0; i < dataB.length; i++) sumB += dataB[i];
+          const levelB = Math.min(8, Math.floor((sumB / dataB.length / 255) * 11));
+          updateLedBars('b', levelB);
+        }
+      }, 50);
+    }
+
+    function updateLedBars(id, level) {
+      for (let i = 1; i <= 8; i++) {
+        const el = document.getElementById(`vu-${id}-${i}`);
+        if (!el) continue;
+        if (i <= level) {
+          el.classList.remove('opacity-20');
+          el.classList.add('opacity-100');
+        } else {
+          el.classList.remove('opacity-100');
+          el.classList.add('opacity-20');
+        }
+      }
+    }
+
+    /* Library & Drawers */
+    function toggleLibraryDrawer(forceState) {
+      const drawer = document.getElementById('library-drawer');
+      const isCurrentlyOpen = !drawer.classList.contains('translate-y-full');
+      const shouldOpen = forceState !== undefined ? forceState : !isCurrentlyOpen;
+
+      if (shouldOpen) {
+        drawer.classList.remove('translate-y-full');
+      } else {
+        drawer.classList.add('translate-y-full');
+      }
+    }
+
+    function selectLibraryTab(tab) {
+      currentLibraryTab = tab;
+      const btnSp = document.getElementById('tab-btn-spotify');
+      const btnLoc = document.getElementById('tab-btn-local');
+
+      if (tab === 'spotify') {
+        btnSp.className = 'px-2.5 py-0.5 rounded bg-[#121c16] text-[#1db954] border border-[#1db954]/50 text-xs font-bold';
+        btnLoc.className = 'px-2.5 py-0.5 rounded bg-gray-900 text-gray-400 border border-gray-800 text-xs';
+      } else {
+        btnSp.className = 'px-2.5 py-0.5 rounded bg-gray-900 text-gray-400 border border-gray-800 text-xs';
+        btnLoc.className = 'px-2.5 py-0.5 rounded bg-gray-800 text-cyan-300 border border-gray-700 text-xs font-bold';
+      }
+      renderLibraryContent();
+    }
+
+    function renderLibraryContent(filter = '') {
+      const container = document.getElementById('library-content-container');
+      const q = filter.toLowerCase();
+
+      if (currentLibraryTab === 'spotify') {
+        const list = spotifyCatalog.filter(t => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q) || t.key.toLowerCase().includes(q));
+
+        container.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            ${list.map(t => `
+              <div class="flex items-center justify-between p-2 rounded-xl bg-black/50 hover:bg-gray-800/80 border border-gray-800 transition">
+                <div class="flex items-center space-x-2 truncate">
+                  <div class="w-8 h-8 rounded-lg ${t.cover} flex items-center justify-center text-white shrink-0">
+                    <i class="fa-solid fa-music text-xs"></i>
+                  </div>
+                  <div class="truncate leading-tight">
+                    <h4 class="text-xs font-bold text-white truncate">${t.title}</h4>
+                    <p class="text-[9px] text-gray-400 truncate">${t.artist} &bull; <span class="text-cyan-400 font-mono">${t.bpm} BPM</span> &bull; <span class="text-amber-400 font-mono">${t.key}</span></p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-1.5 shrink-0">
+                  <button onclick="loadTrackToDeck('${t.id}', 'A')" class="px-2 py-1 rounded bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 text-[9px] font-bold">DECK A</button>
+                  <button onclick="loadTrackToDeck('${t.id}', 'B')" class="px-2 py-1 rounded bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-800 text-[9px] font-bold">DECK B</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="border-2 border-dashed border-gray-700 hover:border-cyan-400 rounded-2xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center space-y-1.5" onclick="document.getElementById('hidden-local-input').click()">
+            <input type="file" id="hidden-local-input" accept="audio/*" class="hidden" onchange="handleLocalFile(event, 'A')">
+            <i class="fa-solid fa-cloud-arrow-up text-2xl text-cyan-400"></i>
+            <h4 class="text-xs font-bold text-white">Choose Audio File (MP3, WAV, AAC, FLAC)</h4>
+            <p class="text-[10px] text-gray-400">Decoded 100% in-browser with instantaneous waveform rendering</p>
+          </div>
+        `;
+      }
+    }
+
+    function handleLibrarySearch(text) {
+      renderLibraryContent(text);
+    }
+
+    function loadTrackToDeck(trackId, deckId) {
+      ensureAudioContext();
+      const track = spotifyCatalog.find(t => t.id === trackId);
+      if (!track) return;
+
+      const d = decks[deckId];
+      d.title = track.title;
+      d.artist = track.artist;
+      d.bpm = track.bpm;
+      d.originalBpm = track.bpm;
+      d.camelotKey = track.key;
+
+      d.buffer = synthesizeClubTrack(audioCtx, track.bpm, track.style);
+      d.pausedAt = 0;
+      d.cuePoint = 0;
+      d.hotCues = [null, null, null, null];
+
+      analyzeWaveformPeaks(deckId);
+      updateDeckHeaderDisplay(deckId);
+      renderPerformancePads(deckId);
+      toggleLibraryDrawer(false);
+      showToast(`Deck ${deckId}: Loaded "${track.title}"`, 'fa-compact-disc');
+    }
+
+    function handleLocalFile(e, deckId) {
+      ensureAudioContext();
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      showToast(`Decoding ${file.name}...`, 'fa-spinner');
+
+      reader.onload = async (ev) => {
+        try {
+          const arrayBuf = ev.target.result;
+          const decoded = await audioCtx.decodeAudioData(arrayBuf);
+          const d = decks[deckId];
+          d.buffer = decoded;
+          d.title = file.name.replace(/\.[^/.]+$/, "");
+          d.artist = "Local Master";
+          d.bpm = 126.0;
+          d.originalBpm = 126.0;
+          d.camelotKey = "8A";
+          d.pausedAt = 0;
+          d.cuePoint = 0;
+          d.hotCues = [null, null, null, null];
+
+          analyzeWaveformPeaks(deckId);
+          updateDeckHeaderDisplay(deckId);
+          renderPerformancePads(deckId);
+          showToast(`Loaded ${file.name} to Deck ${deckId}!`, 'fa-circle-check');
+        } catch (err) {
+          console.error(err);
+          showToast("Could not decode audio file", "fa-circle-xmark");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function updateDeckHeaderDisplay(id) {
+      const d = decks[id];
+      const prefix = id.toLowerCase();
+      document.getElementById(`deck-${prefix}-title`).innerText = d.title;
+      document.getElementById(`deck-${prefix}-artist`).innerText = `${d.artist} • ${d.camelotKey}`;
+      document.getElementById(`deck-${prefix}-bpm`).innerText = d.bpm.toFixed(2);
+      document.getElementById(`deck-${prefix}-key`).innerText = d.camelotKey;
+    }
+
+    /* Master Session Recorder */
+    function toggleRecording() {
+      ensureAudioContext();
+      const recDot = document.getElementById('rec-dot');
+      const recText = document.getElementById('rec-text');
+      const recTimer = document.getElementById('rec-timer');
+
+      if (!isRecording) {
+        const dest = audioCtx.createMediaStreamDestination();
+        masterGain.connect(dest);
+
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(dest.stream);
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `djay-pro-mix-${Date.now()}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          showToast("Live DJ Mix Downloaded!", "fa-download");
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        recSeconds = 0;
+        recTimer.classList.remove('hidden');
+        recDot.classList.add('animate-ping');
+        recText.innerText = 'STOP';
+
+        recTimerInterval = setInterval(() => {
+          recSeconds++;
+          const m = Math.floor(recSeconds / 60).toString().padStart(2, '0');
+          const s = (recSeconds % 60).toString().padStart(2, '0');
+          recTimer.innerText = `${m}:${s}`;
+        }, 1000);
+
+        showToast("Recording Master Output...", "fa-record-vinyl");
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        clearInterval(recTimerInterval);
+        recTimer.classList.add('hidden');
+        recDot.classList.remove('animate-ping');
+        recText.innerText = 'REC';
+      }
+    }
+
+    /* Modals & UI Helpers */
+    function openSpotifyModal() {
+      document.getElementById('spotify-modal').classList.remove('hidden');
+    }
+    function closeSpotifyModal() {
+      document.getElementById('spotify-modal').classList.add('hidden');
+    }
+    function saveSpotifyToken() {
+      const val = document.getElementById('spotify-token-input').value.trim();
+      if (val) {
+        showToast("Spotify Token Saved! Ready to stream.", "fa-brands fa-spotify");
+        closeSpotifyModal();
+      } else {
+        showToast("Please enter an OAuth token first", "fa-triangle-exclamation");
+      }
+    }
+
+    function toggleGithubModal(open) {
+      document.getElementById('github-modal').classList.toggle('hidden', !open);
+    }
+
+    function formatTime(sec) {
+      if (isNaN(sec) || sec < 0) return "00:00.0";
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      const t = Math.floor((sec % 1) * 10);
+      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${t}`;
+    }
+
+    let toastTimer = null;
+    function showToast(msg, icon = 'fa-circle-check') {
+      const t = document.getElementById('toast');
+      const text = document.getElementById('toast-text');
+      const ic = document.getElementById('toast-icon');
+
+      text.innerText = msg;
+      ic.className = `fa-solid ${icon} text-cyan-400`;
+
+      t.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+      t.classList.add('opacity-100', 'translate-y-0');
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        t.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
+        t.classList.remove('opacity-100', 'translate-y-0');
+      }, 2200);
+    }
+
+    /* Window Load Initializer */
+    window.onload = function() {
+      initPinchToZoom();
+      initWaveformCanvases();
+      initJogWheel('A');
+      initJogWheel('B');
+      renderPerformancePads('A');
+      renderPerformancePads('B');
+      renderLibraryContent();
+
+      // Preload starter tracks
+      loadTrackToDeck('sp_1', 'A');
+      loadTrackToDeck('sp_2', 'B');
+
+      startVuMeters();
+      renderVisualsLoop();
+
+      // Compute initial fit
+      checkOrientation();
+      autoFitScale();
+    };
+  </script>
+</body>
+</html>
