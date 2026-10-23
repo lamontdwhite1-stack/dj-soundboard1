@@ -655,7 +655,6 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-zinc-800/60" id="library-track-rows">
-          <!-- Populated dynamically via Spotify API or default crate -->
         </tbody>
       </table>
     </div>
@@ -933,57 +932,73 @@
 
       spotifyAccessToken = tokenInput;
       statusMsg.className = "p-2.5 rounded-lg text-xs font-mono bg-blue-950 text-blue-300 border border-blue-800";
-      statusMsg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Connecting to Spotify Web API...';
+      statusMsg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Querying Spotify Web API...';
 
       try {
-        // Query Spotify top tracks or fall back to dance query
         let res = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=15', {
           headers: { 'Authorization': `Bearer ${spotifyAccessToken}` }
         });
 
-        if (res.status === 401) {
-          throw new Error('Token expired or invalid. Please generate a fresh token from the Spotify Developer Console.');
+        let data = await res.json();
+
+        if (data.error) {
+          throw new Error(`Spotify API (${data.error.status}): ${data.error.message}`);
         }
 
-        let data = await res.json();
-        
-        // If user top tracks are empty, query dance catalog
-        if (!data.items || data.items.length === 0) {
-          const searchRes = await fetch('https://api.spotify.com/v1/search?q=genre:dance&type=track&limit=20', {
+        let rawTracks = Array.isArray(data.items) ? data.items : [];
+
+        if (rawTracks.length === 0) {
+          const searchRes = await fetch('https://api.spotify.com/v1/search?q=hiphop%20OR%20trap%20OR%20house&type=track&limit=20', {
             headers: { 'Authorization': `Bearer ${spotifyAccessToken}` }
           });
           const searchData = await searchRes.json();
-          data = { items: searchData.tracks.items };
+
+          if (searchData.error) {
+            throw new Error(`Spotify Search (${searchData.error.status}): ${searchData.error.message}`);
+          }
+
+          if (searchData.tracks && Array.isArray(searchData.tracks.items)) {
+            rawTracks = searchData.tracks.items;
+          }
         }
 
-        fetchedTracks = data.items.map(t => ({
+        if (rawTracks.length === 0) {
+          throw new Error("No tracks returned from Spotify for this query or account.");
+        }
+
+        fetchedTracks = rawTracks.map(t => ({
           id: t.id,
-          name: t.name,
-          artist: t.artists.map(a => a.name).join(', '),
-          duration: t.duration_ms / 1000,
+          name: t.name || 'Unknown Track',
+          artist: Array.isArray(t.artists) ? t.artists.map(a => a.name).join(', ') : 'Unknown Artist',
+          duration: t.duration_ms ? t.duration_ms / 1000 : 180,
           bpm: 126.0,
           key: '8A',
-          source: t.preview_url ? 'Spotify Stream' : 'Spotify (Full Track)',
-          preview_url: t.preview_url,
-          art: t.album.images[0] ? t.album.images[0].url : null,
-          uri: t.uri
+          source: t.preview_url ? 'Spotify Preview' : 'Spotify (Synth Rig)',
+          preview_url: t.preview_url || null,
+          art: (t.album && t.album.images && t.album.images[0]) ? t.album.images[0].url : null,
+          uri: t.uri || ''
         }));
 
         renderTrackTable(fetchedTracks);
 
-        // Update UI status badges
-        document.getElementById('spotify-conn-status').textContent = `Connected (${fetchedTracks.length} tracks loaded)`;
-        document.getElementById('spotify-conn-status').className = "text-[11px] font-mono text-emerald-400 font-bold";
+        const statusEl = document.getElementById('spotify-conn-status');
+        if (statusEl) {
+          statusEl.textContent = `Connected (${fetchedTracks.length} tracks)`;
+          statusEl.className = "text-[11px] font-mono text-emerald-400 font-bold";
+        }
         document.getElementById('spotify-active-badge').classList.remove('hidden');
         document.getElementById('btn-spotify-text').textContent = "Spotify Active";
 
         statusMsg.className = "p-2.5 rounded-lg text-xs font-mono bg-emerald-950 text-emerald-300 border border-emerald-800";
-        statusMsg.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Success! Loaded ${fetchedTracks.length} tracks into crate.`;
+        statusMsg.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Loaded ${fetchedTracks.length} tracks into crate.`;
 
         setTimeout(() => {
           closeSpotifyModal();
-          toggleLibraryDrawer();
-        }, 800);
+          const drawer = document.getElementById('library-drawer');
+          if (drawer.classList.contains('translate-y-full')) {
+            toggleLibraryDrawer();
+          }
+        }, 600);
 
       } catch (err) {
         statusMsg.className = "p-2.5 rounded-lg text-xs font-mono bg-red-950 text-red-300 border border-red-800";
@@ -1000,28 +1015,45 @@
         return;
       }
 
+      const statusEl = document.getElementById('spotify-conn-status');
+      if (statusEl) statusEl.textContent = "Searching Spotify...";
+
       try {
         const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=25`, {
           headers: { 'Authorization': `Bearer ${spotifyAccessToken}` }
         });
+        
         const data = await res.json();
-        if (data.tracks && data.tracks.items) {
-          fetchedTracks = data.tracks.items.map(t => ({
-            id: t.id,
-            name: t.name,
-            artist: t.artists.map(a => a.name).join(', '),
-            duration: t.duration_ms / 1000,
-            bpm: 126.0,
-            key: '7A',
-            source: t.preview_url ? 'Spotify Stream' : 'Spotify Preview',
-            preview_url: t.preview_url,
-            art: t.album.images[0] ? t.album.images[0].url : null,
-            uri: t.uri
-          }));
-          renderTrackTable(fetchedTracks);
+
+        if (data.error) {
+          throw new Error(`${data.error.status} - ${data.error.message}`);
         }
-      } catch(e) {
-        alert("Spotify search error: " + e.message);
+
+        if (!data.tracks || !Array.isArray(data.tracks.items)) {
+          throw new Error("No tracks found matching your search term.");
+        }
+
+        fetchedTracks = data.tracks.items.map(t => ({
+          id: t.id,
+          name: t.name || 'Unknown Track',
+          artist: Array.isArray(t.artists) ? t.artists.map(a => a.name).join(', ') : 'Unknown Artist',
+          duration: t.duration_ms ? t.duration_ms / 1000 : 180,
+          bpm: 126.0,
+          key: '7A',
+          source: t.preview_url ? 'Spotify Preview' : 'Spotify (Synth Rig)',
+          preview_url: t.preview_url || null,
+          art: (t.album && t.album.images && t.album.images[0]) ? t.album.images[0].url : null,
+          uri: t.uri || ''
+        }));
+
+        renderTrackTable(fetchedTracks);
+        if (statusEl) statusEl.textContent = `Found ${fetchedTracks.length} tracks`;
+
+      } catch(err) {
+        if (statusEl) {
+          statusEl.textContent = `Search error: ${err.message}`;
+          statusEl.className = "text-[11px] font-mono text-red-400";
+        }
       }
     }
 
@@ -1032,12 +1064,10 @@
       const track = fetchedTracks[trackIndex] || defaultTracks[trackIndex];
       if (!track) return;
 
-      // Update metadata on deck
       document.getElementById(`deck${deckId}-title`).textContent = track.name;
       document.getElementById(`deck${deckId}-artist`).textContent = track.artist;
       document.getElementById(`deck${deckId}-remain-time`).textContent = `-${Math.floor(track.duration/60)}:${String(Math.floor(track.duration%60)).padStart(2,'0')}`;
 
-      // Update artwork if present
       const artImg = document.getElementById(`deck${deckId}-artwork`);
       const defaultIcon = document.getElementById(`deck${deckId}-default-icon`);
       if (track.art) {
@@ -1049,7 +1079,6 @@
         defaultIcon.classList.remove('hidden');
       }
 
-      // If Spotify preview URL exists, decode audio into Web Audio buffer
       if (track.preview_url) {
         document.getElementById(`deck${deckId}-title`).textContent = "Streaming from Spotify...";
         try {
@@ -1060,7 +1089,6 @@
             document.getElementById(`deck${deckId}-title`).textContent = track.name;
           });
         } catch(e) {
-          console.warn("Direct stream fetch blocked by CORS, switching to internal synth engine with metadata.");
           generateProceduralTrack(deckId, 126.0);
           document.getElementById(`deck${deckId}-title`).textContent = track.name;
         }
@@ -1070,7 +1098,6 @@
 
       toggleLibraryDrawer();
     }
-
 
     /* ==========================================================
        4. TRANSPORT, JOG & ROTARY INTERACTION
@@ -1172,7 +1199,7 @@
 
     /* ==========================================================
        5. ROTARY KNOBS & MIXER DSP
-       ========================================================== */
+       ========================================================= */
     const KnobValues = {
       gainA: 0.8, gainB: 0.8,
       hiA: 0, midA: 0, lowA: 0, filterA: 0,
