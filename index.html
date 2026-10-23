@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>djay Pro Studio - Universal Web Console</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
@@ -10,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
 
   <script>
     tailwind.config = {
@@ -35,56 +38,80 @@
   </script>
 
   <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+      --sal: env(safe-area-inset-left, 0px);
+      --sar: env(safe-area-inset-right, 0px);
+    }
+
+    * {
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body, html {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #08090b;
+      background-color: #060709;
       color: #e2e8f0;
       user-select: none;
       -webkit-user-select: none;
       font-family: 'Inter', sans-serif;
     }
 
+    /* Fixed Stage Scaler */
     #viewport-container {
       width: 100vw;
       height: 100vh;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
       position: relative;
-      touch-action: pan-x pan-y pinch-zoom;
+      padding-top: var(--sat);
+      padding-bottom: var(--sab);
+      padding-left: var(--sal);
+      padding-right: var(--sar);
+      box-sizing: border-box;
     }
 
     #zoom-stage {
-      position: absolute;
-      top: 0;
-      left: 0;
-      transform-origin: 0 0;
-      transition: transform 0.08s ease-out;
+      transform-origin: center center;
+      transition: transform 0.1s ease-out;
+      will-change: transform;
     }
 
+    /* Target Aspect Ratio for iPhone 17 Pro Landscape (874x402 native CSS) */
     #console-chassis {
-      width: 1280px;
-      height: 720px;
+      width: 960px;
+      height: 440px;
       display: flex;
       flex-direction: column;
-      background: radial-gradient(circle at 50% 20%, #171922 0%, #0c0d12 100%);
-      box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+      background: radial-gradient(circle at 50% 20%, #151720 0%, #090a0e 100%);
+      border: 1px solid #1f232f;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.95);
       position: relative;
     }
 
+    /* Pointer-Based Rotary Knobs */
     .knob-wrap {
       position: relative;
       touch-action: none;
+      cursor: ns-resize;
     }
     .knob-cap {
       border-radius: 50%;
-      background: conic-gradient(from 180deg, #1c1f26 0%, #353b49 50%, #1c1f26 100%);
-      box-shadow: inset 0 2px 3px rgba(255,255,255,0.2), 0 4px 8px rgba(0,0,0,0.8);
+      background: conic-gradient(from 180deg, #181b22 0%, #303644 50%, #181b22 100%);
+      box-shadow: inset 0 1.5px 2px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.85);
       position: relative;
-      cursor: ns-resize;
+      pointer-events: none;
     }
     .knob-indicator {
       position: absolute;
@@ -98,56 +125,54 @@
       transform: translateX(-50%);
     }
 
+    /* Touch Sliders */
     input[type=range].fader-v {
       -webkit-appearance: none;
       appearance: none;
-      width: 130px;
-      height: 6px;
+      width: 90px;
+      height: 5px;
       background: #090a0d;
       border: 1px solid #232733;
       border-radius: 4px;
       transform: rotate(-90deg);
       outline: none;
-      cursor: pointer;
       touch-action: none;
     }
     input[type=range].fader-v::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 22px;
-      height: 38px;
+      width: 24px;
+      height: 32px;
       background: linear-gradient(180deg, #3d4452 0%, #1f232b 50%, #101217 100%);
       border: 1px solid #576275;
       border-radius: 4px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.4);
-      cursor: ns-resize;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.9);
+      cursor: pointer;
     }
 
     input[type=range].crossfader-h {
       -webkit-appearance: none;
       appearance: none;
       width: 100%;
-      height: 8px;
+      height: 7px;
       background: #090a0d;
       border: 1px solid #232733;
       border-radius: 4px;
       outline: none;
-      cursor: pointer;
       touch-action: none;
     }
     input[type=range].crossfader-h::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 28px;
       background: linear-gradient(180deg, #ff3b30 0%, #b81b12 100%);
       border: 1px solid #ff7b72;
       border-radius: 4px;
-      box-shadow: 0 4px 10px rgba(255,59,48,0.4);
-      cursor: ew-resize;
+      box-shadow: 0 2px 8px rgba(255,59,48,0.5);
+      cursor: pointer;
     }
 
     .jog-rim {
       border-radius: 50%;
-      box-shadow: inset 0 0 12px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.85);
       touch-action: none;
       cursor: grab;
     }
@@ -155,114 +180,102 @@
       cursor: grabbing;
     }
 
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.5);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #2b303c;
-      border-radius: 3px;
-    }
-
+    /* VU LED segments */
     .vu-segment {
       width: 100%;
-      height: 4px;
-      background: #171b22;
+      height: 3px;
+      background: #14171d;
       border-radius: 1px;
       transition: background 0.04s ease-out;
     }
-    .vu-segment.green.active { background: #00ff66; box-shadow: 0 0 5px #00ff66; }
-    .vu-segment.orange.active { background: #ffaa00; box-shadow: 0 0 5px #ffaa00; }
-    .vu-segment.red.active { background: #ff3344; box-shadow: 0 0 6px #ff3344; }
+    .vu-segment.green.active { background: #00ff66; box-shadow: 0 0 4px #00ff66; }
+    .vu-segment.orange.active { background: #ffaa00; box-shadow: 0 0 4px #ffaa00; }
+    .vu-segment.red.active { background: #ff3344; box-shadow: 0 0 5px #ff3344; }
 
-    @keyframes pulse-ring {
-      0% { transform: scale(0.95); opacity: 0.8; }
-      50% { transform: scale(1.02); opacity: 1; }
-      100% { transform: scale(0.95); opacity: 0.8; }
+    /* Rotate warning screen */
+    #rotate-screen-warning {
+      display: none;
     }
-    .pulse-rec {
-      animation: pulse-ring 1.5s infinite;
+    @media (orientation: portrait) {
+      #rotate-screen-warning {
+        display: flex !important;
+      }
     }
   </style>
 </head>
 <body>
 
+  <!-- PORTRAIT ORIENTATION GUARD -->
+  <div id="rotate-screen-warning" class="fixed inset-0 bg-[#090b10] z-50 flex-col items-center justify-center p-6 text-center select-none">
+    <div class="w-16 h-16 rounded-2xl bg-zinc-800/80 border border-cyan-500/30 flex items-center justify-center mb-4 text-cyan-400 text-2xl animate-pulse">
+      <i class="fa-solid fa-rotate text-3xl"></i>
+    </div>
+    <h2 class="font-display font-bold text-lg text-white mb-1">Rotate to Landscape</h2>
+    <p class="text-xs font-mono text-zinc-400 max-w-xs leading-relaxed">
+      djay Pro requires landscape orientation to display dual CDJ platters and the DJM mixer side-by-side.
+    </p>
+  </div>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
   <div id="viewport-container">
     <div id="zoom-stage">
-      
       <main id="console-chassis">
         
-        <!-- TOP DECK: WAVEFORMS & GLOBAL STATUS -->
-        <header class="h-20 bg-[#0e1015] border-b border-[#1e222c] px-4 flex items-center justify-between gap-4 select-none relative z-20">
-          <div class="flex items-center gap-3 w-52 shrink-0">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-deckA_accent to-deckB flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <i class="fa-solid fa-compact-disc text-white text-base"></i>
+        <!-- HEADER: STACKED RUNNING DUAL WAVEFORMS -->
+        <header class="h-12 bg-[#0c0d12] border-b border-[#1c202a] px-3 flex items-center justify-between gap-2.5 relative z-20">
+          <div class="flex items-center gap-2 w-32 shrink-0">
+            <div class="w-6 h-6 rounded bg-gradient-to-tr from-deckA_accent to-deckB flex items-center justify-center shadow">
+              <i class="fa-solid fa-compact-disc text-white text-xs"></i>
             </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-display font-bold text-sm tracking-wider text-white">djay <span class="text-cyan-400">PRO</span></span>
-                <span id="spotify-active-badge" class="hidden text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-700/60 px-1.5 py-0.5 rounded font-mono font-bold flex items-center gap-1">
-                  <i class="fa-brands fa-spotify"></i> LIVE
-                </span>
-                <span id="dsp-badge" class="text-[9px] bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 px-1.5 py-0.5 rounded font-mono font-bold">48kHz</span>
-              </div>
-              <div class="text-[10px] text-zinc-400 flex items-center gap-1.5">
-                <span id="engine-status-dot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span id="engine-status-text">CORE DSP READY</span>
-              </div>
-            </div>
+            <span class="font-display font-bold text-xs tracking-wider text-white">djay <span class="text-cyan-400">PRO</span></span>
           </div>
 
-          <!-- Dual-Stacked Waveforms -->
-          <div class="flex-1 h-14 bg-[#07080a] rounded-lg border border-[#212633] relative overflow-hidden flex flex-col justify-between py-0.5 px-1 shadow-inner">
-            <div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-red-500 z-10 -translate-x-1/2 shadow-[0_0_8px_#ff3b30]"></div>
-            <canvas id="waveform-stacked-a" class="w-full h-[25px]"></canvas>
-            <div class="w-full h-px bg-zinc-800"></div>
-            <canvas id="waveform-stacked-b" class="w-full h-[25px]"></canvas>
+          <!-- Dual Waveform Display -->
+          <div class="flex-1 h-9 bg-[#06070a] rounded border border-[#1e232f] relative overflow-hidden flex flex-col justify-between py-0.5 px-1 shadow-inner">
+            <div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-red-500 z-10 -translate-x-1/2 shadow-[0_0_6px_#ff3b30]"></div>
+            <canvas id="waveform-stacked-a" class="w-full h-[14px]"></canvas>
+            <div class="w-full h-px bg-zinc-800/80"></div>
+            <canvas id="waveform-stacked-b" class="w-full h-[14px]"></canvas>
 
-            <div class="absolute top-1 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded border border-zinc-700/60 font-mono text-[9px] text-zinc-300">
+            <div class="absolute top-0.5 right-1.5 bg-black/80 px-1 py-0.5 rounded font-mono text-[8px] text-zinc-300">
               Δ BPM: <span id="delta-bpm-display" class="text-emerald-400 font-bold">0.00</span>
             </div>
           </div>
 
-          <!-- Top Actions -->
-          <div class="flex items-center gap-2.5 shrink-0">
-            <button id="btn-master-rec" onclick="toggleRecording()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-medium bg-[#1a1d24] border border-[#2b313d] hover:border-red-500/50 transition">
-              <span id="rec-dot" class="w-2.5 h-2.5 rounded-full bg-zinc-600"></span>
+          <!-- Quick Actions -->
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="btn-master-rec" onclick="toggleRecording()" class="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-mono font-medium bg-[#161820] border border-[#262b36]">
+              <span id="rec-dot" class="w-2 h-2 rounded-full bg-zinc-600"></span>
               <span id="rec-label">REC</span>
-              <span id="rec-time" class="hidden text-red-400 text-[10px]">00:00</span>
             </button>
 
-            <button onclick="openSpotifyModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/30 transition">
+            <button onclick="openSpotifyModal()" class="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-emerald-950 text-emerald-300 border border-emerald-700/60">
               <i class="fa-brands fa-spotify text-emerald-400"></i>
-              <span id="btn-spotify-text">Spotify Connect</span>
+              <span>Spotify</span>
             </button>
 
-            <button onclick="toggleLibraryDrawer()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-blue-600/20 text-blue-300 border border-blue-500/40 hover:bg-blue-600/30 transition">
+            <button onclick="toggleLibraryDrawer()" class="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-cyan-950 text-cyan-300 border border-cyan-700/60">
               <i class="fa-solid fa-list-music"></i>
-              <span>Library</span>
+              <span>Crate</span>
             </button>
           </div>
         </header>
 
-        <!-- HARDWARE CONSOLE -->
+        <!-- HARDWARE CONSOLE: DECK A | DJM MIXER | DECK B -->
         <div class="flex-1 grid grid-cols-12 gap-0 overflow-hidden relative">
 
           <!-- DECK A -->
-          <section id="deck-section-a" class="col-span-5 bg-[#0f1116] border-r border-[#1e222c] p-3 flex flex-col justify-between select-none">
-            <div class="flex items-center justify-between bg-[#151821] p-2 rounded-lg border border-[#262c3b]">
-              <div class="flex items-center gap-2.5 overflow-hidden">
-                <img id="deckA-artwork" class="w-9 h-9 rounded object-cover border border-cyan-500/40 hidden" src="" alt="Album Art">
-                <div id="deckA-default-icon" class="w-9 h-9 rounded bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center font-bold text-cyan-400 text-xs shrink-0">
-                  <i class="fa-solid fa-waveform-lines text-base"></i>
+          <section id="deck-section-a" class="col-span-5 bg-[#0d0f14] border-r border-[#1a1e28] p-2 flex flex-col justify-between">
+            <div class="flex items-center justify-between bg-[#12151d] px-2 py-1 rounded border border-[#1e2330]">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <img id="deckA-artwork" class="w-6 h-6 rounded object-cover border border-cyan-500/40 hidden" src="" alt="Art">
+                <div id="deckA-default-icon" class="w-6 h-6 rounded bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center font-bold text-cyan-400 text-[10px] shrink-0">
+                  <i class="fa-solid fa-waveform-lines"></i>
                 </div>
                 <div class="truncate">
-                  <div id="deckA-title" class="font-display font-bold text-xs text-cyan-300 truncate tracking-wide">Club Anthem - Main Mix</div>
-                  <div class="text-[10px] text-zinc-400 flex items-center gap-2 font-mono">
-                    <span id="deckA-artist" class="text-zinc-300">1K Audio Lab</span>
+                  <div id="deckA-title" class="font-display font-bold text-[11px] text-cyan-300 truncate">Club Anthem - Main</div>
+                  <div class="text-[9px] text-zinc-400 flex items-center gap-1.5 font-mono">
+                    <span id="deckA-artist" class="text-zinc-300 truncate max-w-[80px]">1K Lab</span>
                     <span class="text-zinc-600">•</span>
                     <span id="deckA-key" class="text-amber-400 font-bold">8A</span>
                     <span class="text-zinc-600">•</span>
@@ -271,231 +284,153 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-1 shrink-0">
-                <label class="cursor-pointer px-2 py-1 bg-cyan-950 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 rounded text-[10px] font-mono transition flex items-center gap-1">
-                  <i class="fa-solid fa-folder-open"></i>
-                  <span>Load</span>
-                  <input type="file" accept="audio/*" class="hidden" onchange="handleFileLoad(event, 'A')">
-                </label>
-              </div>
+              <label class="cursor-pointer px-1.5 py-0.5 bg-cyan-950 border border-cyan-800 text-cyan-300 rounded text-[9px] font-mono shrink-0">
+                <span>MP3</span>
+                <input type="file" accept="audio/*" class="hidden" onchange="handleFileLoad(event, 'A')">
+              </label>
             </div>
 
-            <!-- Waveform View -->
-            <div class="h-14 bg-[#08090d] rounded-lg border border-cyan-950 p-1 flex flex-col justify-between relative overflow-hidden">
-              <canvas id="waveform-overview-a" class="w-full h-8 cursor-pointer"></canvas>
-              <div class="flex justify-between items-center text-[10px] font-mono px-1">
-                <span id="deckA-current-time" class="text-cyan-400 font-bold">00:00.0</span>
-                <span id="deckA-remain-time" class="text-zinc-500">-03:45.2</span>
-              </div>
-            </div>
-
-            <!-- Platter & Tempo -->
-            <div class="flex items-center justify-between gap-4 my-1">
-              <div class="relative w-44 h-44 mx-auto flex items-center justify-center">
-                <div id="jog-outer-a" class="jog-rim w-44 h-44 rounded-full bg-[#171920] border-4 border-[#252a36] relative flex items-center justify-center p-2.5">
-                  <div class="w-full h-full rounded-full bg-[#0d0e12] border border-cyan-900/60 relative flex items-center justify-center" style="background: repeating-radial-gradient(circle, #0e1014 0, #0e1014 2px, #181b22 3px, #0e1014 4px);">
-                    <div id="jog-disc-a" class="w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-950 to-slate-900 border-2 border-cyan-400/80 flex items-center justify-center relative shadow-lg">
-                      <div class="w-6 h-6 rounded-full bg-[#0a0c10] border border-cyan-400 flex items-center justify-center">
-                        <div class="w-2 h-2 rounded-full bg-cyan-400"></div>
+            <!-- Platter & Pitch Row -->
+            <div class="flex items-center justify-between gap-2 my-0.5">
+              <!-- Jog Wheel -->
+              <div class="relative w-36 h-36 mx-auto flex items-center justify-center">
+                <div id="jog-outer-a" class="jog-rim w-36 h-36 rounded-full bg-[#14161d] border-4 border-[#222733] relative flex items-center justify-center p-2">
+                  <div class="w-full h-full rounded-full bg-[#0a0b0e] border border-cyan-900/60 relative flex items-center justify-center" style="background: repeating-radial-gradient(circle, #0e1014 0, #0e1014 2px, #181b22 3px, #0e1014 4px);">
+                    <div id="jog-disc-a" class="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-950 to-slate-900 border-2 border-cyan-400 flex items-center justify-center relative shadow">
+                      <div class="w-4 h-4 rounded-full bg-[#080a0d] border border-cyan-400 flex items-center justify-center">
+                        <div class="w-1.5 h-1.5 rounded-full bg-cyan-400"></div>
                       </div>
-                      <div class="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-4 bg-cyan-300 rounded-sm shadow-[0_0_8px_#00f2fe]"></div>
+                      <div class="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-3 bg-cyan-300 rounded-sm shadow-[0_0_6px_#00f2fe]"></div>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Pitch Fader -->
-              <div class="flex flex-col items-center justify-between h-44 w-20 bg-[#12141a] rounded-lg border border-[#212633] p-1.5">
-                <div class="text-center font-mono">
-                  <span class="text-[9px] text-zinc-400 block font-bold">TEMPO</span>
-                  <span id="deckA-pitch-display" class="text-cyan-400 text-[11px] font-bold">0.0%</span>
-                </div>
-                <div class="relative h-24 flex items-center justify-center">
+              <div class="flex flex-col items-center justify-between h-36 w-14 bg-[#101218] rounded border border-[#1d222e] p-1">
+                <span id="deckA-pitch-display" class="text-cyan-400 text-[9px] font-mono font-bold">0.0%</span>
+                <div class="relative h-20 flex items-center justify-center">
                   <input type="range" id="deckA-pitch-fader" class="fader-v" min="-8" max="8" step="0.05" value="0" oninput="updatePitch('A', this.value)">
                 </div>
-                <div class="grid grid-cols-3 gap-1 w-full text-[10px] font-mono">
-                  <button onmousedown="pitchBend('A', -1)" onmouseup="pitchBend('A', 0)" class="bg-[#1c202a] hover:bg-[#252b38] border border-zinc-700 rounded py-0.5 text-zinc-300 active:bg-cyan-800">-</button>
-                  <button id="deckA-keylock" onclick="toggleKeyLock('A')" class="bg-[#1c202a] border border-zinc-700 rounded py-0.5 text-cyan-400 font-bold active:bg-cyan-800">KEY</button>
-                  <button onmousedown="pitchBend('A', 1)" onmouseup="pitchBend('A', 0)" class="bg-[#1c202a] hover:bg-[#252b38] border border-zinc-700 rounded py-0.5 text-zinc-300 active:bg-cyan-800">+</button>
-                </div>
+                <button id="deckA-keylock" onclick="toggleKeyLock('A')" class="bg-[#181a22] border border-zinc-700 rounded px-1 py-0.5 text-cyan-400 text-[8px] font-mono font-bold">KEY</button>
               </div>
             </div>
 
             <!-- Transport & Pads -->
-            <div class="flex flex-col gap-2">
-              <div class="grid grid-cols-4 gap-2">
-                <button id="deckA-cue-btn" onclick="deckCue('A')" class="bg-gradient-to-b from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-display font-bold py-2 rounded-lg border border-amber-400/50 shadow-md text-xs flex items-center justify-center gap-1 active:scale-95 transition">
-                  <i class="fa-solid fa-location-crosshairs"></i>
-                  <span>CUE</span>
+            <div class="flex flex-col gap-1.5">
+              <div class="grid grid-cols-4 gap-1.5">
+                <button id="deckA-cue-btn" onclick="deckCue('A')" class="bg-gradient-to-b from-amber-600 to-amber-700 text-white font-display font-bold py-1.5 rounded border border-amber-400/50 text-xs active:scale-95 transition">CUE</button>
+                <button id="deckA-play-btn" onclick="togglePlay('A')" class="col-span-2 bg-gradient-to-b from-cyan-600 to-cyan-700 text-white font-display font-bold py-1.5 rounded border border-cyan-300/50 text-xs flex items-center justify-center gap-1 active:scale-95 transition">
+                  <i id="deckA-play-icon" class="fa-solid fa-play text-[10px]"></i>
+                  <span id="deckA-play-text">PLAY</span>
                 </button>
-                <button id="deckA-play-btn" onclick="togglePlay('A')" class="col-span-2 bg-gradient-to-b from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600 text-white font-display font-bold py-2 rounded-lg border border-cyan-300/50 shadow-md text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
-                  <i id="deckA-play-icon" class="fa-solid fa-play"></i>
-                  <span id="deckA-play-text">PLAY / PAUSE</span>
-                </button>
-                <button onclick="deckSync('A')" class="bg-[#1e232f] hover:bg-cyan-950 border border-cyan-800/80 text-cyan-300 font-mono font-bold py-2 rounded-lg text-xs active:bg-cyan-700 active:text-white transition">
-                  SYNC
-                </button>
+                <button onclick="deckSync('A')" class="bg-[#191d26] border border-cyan-800 text-cyan-300 font-mono font-bold py-1.5 rounded text-xs active:bg-cyan-700 active:text-white">SYNC</button>
               </div>
 
-              <div class="bg-[#12141a] p-1.5 rounded-lg border border-[#212633]">
-                <div class="flex items-center justify-between mb-1 text-[9px] font-mono text-zinc-400">
-                  <span class="text-cyan-400 font-bold">HOT CUES (1-4)</span>
-                  <div class="flex gap-2">
-                    <button onclick="setPadMode('A', 'cue')" class="text-cyan-400 font-bold">CUES</button>
-                    <button onclick="setPadMode('A', 'loop')" class="hover:text-zinc-200">LOOP</button>
-                    <button onclick="setPadMode('A', 'stems')" class="hover:text-zinc-200">STEMS</button>
-                    <button onclick="setPadMode('A', 'sampler')" class="hover:text-zinc-200">SAMPLE</button>
-                  </div>
-                </div>
-                <div class="grid grid-cols-4 gap-1.5" id="deckA-pads-grid">
-                  <button onclick="triggerPad('A', 0)" class="h-8 rounded bg-[#1d222e] hover:bg-cyan-600 border border-cyan-700/60 text-white font-mono text-xs font-bold transition active:scale-95">1</button>
-                  <button onclick="triggerPad('A', 1)" class="h-8 rounded bg-[#1d222e] hover:bg-cyan-600 border border-cyan-700/60 text-white font-mono text-xs font-bold transition active:scale-95">2</button>
-                  <button onclick="triggerPad('A', 2)" class="h-8 rounded bg-[#1d222e] hover:bg-cyan-600 border border-cyan-700/60 text-white font-mono text-xs font-bold transition active:scale-95">3</button>
-                  <button onclick="triggerPad('A', 3)" class="h-8 rounded bg-[#1d222e] hover:bg-cyan-600 border border-cyan-700/60 text-white font-mono text-xs font-bold transition active:scale-95">4</button>
-                </div>
+              <div class="grid grid-cols-4 gap-1" id="deckA-pads-grid">
+                <button onclick="triggerPad('A', 0)" class="h-6 rounded bg-[#161a24] border border-cyan-700/60 text-white font-mono text-[10px] font-bold active:scale-95">1</button>
+                <button onclick="triggerPad('A', 1)" class="h-6 rounded bg-[#161a24] border border-cyan-700/60 text-white font-mono text-[10px] font-bold active:scale-95">2</button>
+                <button onclick="triggerPad('A', 2)" class="h-6 rounded bg-[#161a24] border border-cyan-700/60 text-white font-mono text-[10px] font-bold active:scale-95">3</button>
+                <button onclick="triggerPad('A', 3)" class="h-6 rounded bg-[#161a24] border border-cyan-700/60 text-white font-mono text-[10px] font-bold active:scale-95">4</button>
               </div>
             </div>
           </section>
 
           <!-- MIXER -->
-          <section id="mixer-section" class="col-span-2 bg-[#121319] border-r border-[#1e222c] p-2 flex flex-col justify-between select-none">
-            <div class="grid grid-cols-2 gap-2 text-center">
-              <div class="flex flex-col items-center">
-                <span class="text-[9px] font-mono text-zinc-400">TRIM A</span>
-                <div class="knob-wrap mt-0.5" onwheel="handleKnobWheel(event, 'gainA')" onmousedown="startKnobDrag(event, 'gainA')">
-                  <div id="knob-gainA" class="knob-cap w-8 h-8"><div class="knob-indicator"></div></div>
-                </div>
-              </div>
-              <div class="flex flex-col items-center">
-                <span class="text-[9px] font-mono text-zinc-400">TRIM B</span>
-                <div class="knob-wrap mt-0.5" onwheel="handleKnobWheel(event, 'gainB')" onmousedown="startKnobDrag(event, 'gainB')">
-                  <div id="knob-gainB" class="knob-cap w-8 h-8"><div class="knob-indicator"></div></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- EQs -->
-            <div class="flex flex-col gap-2 my-1 bg-[#0b0c10] p-2 rounded-lg border border-[#1e222d]">
-              <div class="grid grid-cols-2 gap-2 text-center">
+          <section id="mixer-section" class="col-span-2 bg-[#0f1015] border-r border-[#1a1e28] p-1.5 flex flex-col justify-between">
+            <!-- 3-Band EQs & Color -->
+            <div class="flex flex-col gap-1 bg-[#090a0d] p-1.5 rounded border border-[#1b1e26]">
+              <div class="grid grid-cols-2 gap-1 text-center">
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-zinc-500">HI</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'hiA')" onmousedown="startKnobDrag(event, 'hiA')">
-                    <div id="knob-hiA" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-zinc-500">HI</span>
+                  <div class="knob-wrap" data-knob="hiA"><div id="knob-hiA" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-zinc-500">HI</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'hiB')" onmousedown="startKnobDrag(event, 'hiB')">
-                    <div id="knob-hiB" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-zinc-500">HI</span>
+                  <div class="knob-wrap" data-knob="hiB"><div id="knob-hiB" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="grid grid-cols-2 gap-1 text-center">
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-zinc-500">MID</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'midA')" onmousedown="startKnobDrag(event, 'midA')">
-                    <div id="knob-midA" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-zinc-500">MID</span>
+                  <div class="knob-wrap" data-knob="midA"><div id="knob-midA" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-zinc-500">MID</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'midB')" onmousedown="startKnobDrag(event, 'midB')">
-                    <div id="knob-midB" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-zinc-500">MID</span>
+                  <div class="knob-wrap" data-knob="midB"><div id="knob-midB" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="grid grid-cols-2 gap-1 text-center">
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-zinc-500">LOW</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'lowA')" onmousedown="startKnobDrag(event, 'lowA')">
-                    <div id="knob-lowA" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-zinc-500">LOW</span>
+                  <div class="knob-wrap" data-knob="lowA"><div id="knob-lowA" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-zinc-500">LOW</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'lowB')" onmousedown="startKnobDrag(event, 'lowB')">
-                    <div id="knob-lowB" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-zinc-500">LOW</span>
+                  <div class="knob-wrap" data-knob="lowB"><div id="knob-lowB" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-2 text-center pt-1 border-t border-zinc-800/80">
+              <div class="grid grid-cols-2 gap-1 text-center pt-0.5 border-t border-zinc-800">
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-cyan-400 font-bold">COLOR</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'filterA')" onmousedown="startKnobDrag(event, 'filterA')">
-                    <div id="knob-filterA" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-cyan-400 font-bold">COL</span>
+                  <div class="knob-wrap" data-knob="filterA"><div id="knob-filterA" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
                 <div class="flex flex-col items-center">
-                  <span class="text-[8px] font-mono text-amber-400 font-bold">COLOR</span>
-                  <div class="knob-wrap" onwheel="handleKnobWheel(event, 'filterB')" onmousedown="startKnobDrag(event, 'filterB')">
-                    <div id="knob-filterB" class="knob-cap w-7 h-7"><div class="knob-indicator"></div></div>
-                  </div>
+                  <span class="text-[7px] font-mono text-amber-400 font-bold">COL</span>
+                  <div class="knob-wrap" data-knob="filterB"><div id="knob-filterB" class="knob-cap w-6 h-6"><div class="knob-indicator"></div></div></div>
                 </div>
               </div>
             </div>
 
             <!-- Faders & VUs -->
-            <div class="flex items-center justify-around h-32 px-1 relative">
-              <div class="relative h-24 flex items-center justify-center">
+            <div class="flex items-center justify-around h-24 relative px-0.5">
+              <div class="relative h-16 flex items-center justify-center">
                 <input type="range" id="chA-fader" class="fader-v" min="0" max="1" step="0.01" value="0.9" oninput="setChannelVol('A', this.value)">
               </div>
 
-              <div class="flex gap-1 h-28 bg-[#090a0d] p-1 rounded border border-zinc-800">
-                <div class="w-2.5 flex flex-col-reverse justify-between" id="vu-meter-a">
+              <div class="flex gap-1 h-20 bg-[#07080a] p-0.5 rounded border border-zinc-800">
+                <div class="w-1.5 flex flex-col-reverse justify-between" id="vu-meter-a">
                   <div class="vu-segment green"></div><div class="vu-segment green"></div>
-                  <div class="vu-segment green"></div><div class="vu-segment green"></div>
-                  <div class="vu-segment orange"></div><div class="vu-segment orange"></div>
-                  <div class="vu-segment red"></div><div class="vu-segment red"></div>
+                  <div class="vu-segment green"></div><div class="vu-segment orange"></div>
+                  <div class="vu-segment red"></div>
                 </div>
-                <div class="w-2.5 flex flex-col-reverse justify-between" id="vu-meter-b">
+                <div class="w-1.5 flex flex-col-reverse justify-between" id="vu-meter-b">
                   <div class="vu-segment green"></div><div class="vu-segment green"></div>
-                  <div class="vu-segment green"></div><div class="vu-segment green"></div>
-                  <div class="vu-segment orange"></div><div class="vu-segment orange"></div>
-                  <div class="vu-segment red"></div><div class="vu-segment red"></div>
+                  <div class="vu-segment green"></div><div class="vu-segment orange"></div>
+                  <div class="vu-segment red"></div>
                 </div>
               </div>
 
-              <div class="relative h-24 flex items-center justify-center">
+              <div class="relative h-16 flex items-center justify-center">
                 <input type="range" id="chB-fader" class="fader-v" min="0" max="1" step="0.01" value="0.9" oninput="setChannelVol('B', this.value)">
               </div>
             </div>
 
             <!-- Crossfader -->
-            <div class="bg-[#0b0c10] p-2 rounded-lg border border-[#1e222d] flex flex-col gap-1.5">
-              <div class="flex justify-between items-center text-[8px] font-mono text-zinc-400">
-                <span>CURVE:</span>
-                <select id="crossfader-curve" onchange="setCrossfaderCurve(this.value)" class="bg-[#191c25] text-zinc-300 rounded border border-zinc-700 px-1 py-0.5 outline-none">
-                  <option value="linear">Linear</option>
-                  <option value="smooth" selected>Smooth (DJ)</option>
-                  <option value="scratch">Scratch Cut</option>
-                </select>
-              </div>
-
+            <div class="bg-[#090a0d] p-1.5 rounded border border-[#1b1e26] flex flex-col gap-1">
               <input type="range" id="crossfader" class="crossfader-h" min="-1" max="1" step="0.02" value="0" oninput="updateCrossfader(this.value)">
-
-              <div class="flex justify-between text-[8px] font-mono px-1">
+              <div class="flex justify-between text-[7px] font-mono px-0.5">
                 <span class="text-cyan-400 font-bold">A</span>
-                <span class="text-zinc-500">CENTER</span>
                 <span class="text-amber-400 font-bold">B</span>
               </div>
             </div>
           </section>
 
           <!-- DECK B -->
-          <section id="deck-section-b" class="col-span-5 bg-[#0f1116] p-3 flex flex-col justify-between select-none">
-            <div class="flex items-center justify-between bg-[#151821] p-2 rounded-lg border border-[#262c3b]">
-              <div class="flex items-center gap-2.5 overflow-hidden">
-                <img id="deckB-artwork" class="w-9 h-9 rounded object-cover border border-amber-500/40 hidden" src="" alt="Album Art">
-                <div id="deckB-default-icon" class="w-9 h-9 rounded bg-amber-950/80 border border-amber-500/40 flex items-center justify-center font-bold text-amber-400 text-xs shrink-0">
-                  <i class="fa-solid fa-waveform-lines text-base"></i>
+          <section id="deck-section-b" class="col-span-5 bg-[#0d0f14] p-2 flex flex-col justify-between">
+            <div class="flex items-center justify-between bg-[#12151d] px-2 py-1 rounded border border-[#1e2330]">
+              <div class="flex items-center gap-2 overflow-hidden">
+                <img id="deckB-artwork" class="w-6 h-6 rounded object-cover border border-amber-500/40 hidden" src="" alt="Art">
+                <div id="deckB-default-icon" class="w-6 h-6 rounded bg-amber-950/80 border border-amber-500/40 flex items-center justify-center font-bold text-amber-400 text-[10px] shrink-0">
+                  <i class="fa-solid fa-waveform-lines"></i>
                 </div>
                 <div class="truncate">
-                  <div id="deckB-title" class="font-display font-bold text-xs text-amber-300 truncate tracking-wide">Sunset Groove - Tech Dub</div>
-                  <div class="text-[10px] text-zinc-400 flex items-center gap-2 font-mono">
-                    <span id="deckB-artist" class="text-zinc-300">Pablo Sound</span>
+                  <div id="deckB-title" class="font-display font-bold text-[11px] text-amber-300 truncate">Sunset Groove - Tech</div>
+                  <div class="text-[9px] text-zinc-400 flex items-center gap-1.5 font-mono">
+                    <span id="deckB-artist" class="text-zinc-300 truncate max-w-[80px]">Pablo</span>
                     <span class="text-zinc-600">•</span>
                     <span id="deckB-key" class="text-cyan-400 font-bold">9A</span>
                     <span class="text-zinc-600">•</span>
@@ -504,49 +439,32 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-1 shrink-0">
-                <label class="cursor-pointer px-2 py-1 bg-amber-950 hover:bg-amber-900 border border-amber-800 text-amber-300 rounded text-[10px] font-mono transition flex items-center gap-1">
-                  <i class="fa-solid fa-folder-open"></i>
-                  <span>Load</span>
-                  <input type="file" accept="audio/*" class="hidden" onchange="handleFileLoad(event, 'B')">
-                </label>
-              </div>
+              <label class="cursor-pointer px-1.5 py-0.5 bg-amber-950 border border-amber-800 text-amber-300 rounded text-[9px] font-mono shrink-0">
+                <span>MP3</span>
+                <input type="file" accept="audio/*" class="hidden" onchange="handleFileLoad(event, 'B')">
+              </label>
             </div>
 
-            <!-- Waveform View -->
-            <div class="h-14 bg-[#08090d] rounded-lg border border-amber-950 p-1 flex flex-col justify-between relative overflow-hidden">
-              <canvas id="waveform-overview-b" class="w-full h-8 cursor-pointer"></canvas>
-              <div class="flex justify-between items-center text-[10px] font-mono px-1">
-                <span id="deckB-current-time" class="text-amber-400 font-bold">00:00.0</span>
-                <span id="deckB-remain-time" class="text-zinc-500">-04:12.8</span>
-              </div>
-            </div>
-
-            <!-- Platter & Tempo -->
-            <div class="flex items-center justify-between gap-4 my-1">
-              <div class="flex flex-col items-center justify-between h-44 w-20 bg-[#12141a] rounded-lg border border-[#212633] p-1.5">
-                <div class="text-center font-mono">
-                  <span class="text-[9px] text-zinc-400 block font-bold">TEMPO</span>
-                  <span id="deckB-pitch-display" class="text-amber-400 text-[11px] font-bold">0.0%</span>
-                </div>
-                <div class="relative h-24 flex items-center justify-center">
+            <!-- Platter & Pitch Row -->
+            <div class="flex items-center justify-between gap-2 my-0.5">
+              <!-- Pitch Fader (Left side for symmetry) -->
+              <div class="flex flex-col items-center justify-between h-36 w-14 bg-[#101218] rounded border border-[#1d222e] p-1">
+                <span id="deckB-pitch-display" class="text-amber-400 text-[9px] font-mono font-bold">0.0%</span>
+                <div class="relative h-20 flex items-center justify-center">
                   <input type="range" id="deckB-pitch-fader" class="fader-v" min="-8" max="8" step="0.05" value="0" oninput="updatePitch('B', this.value)">
                 </div>
-                <div class="grid grid-cols-3 gap-1 w-full text-[10px] font-mono">
-                  <button onmousedown="pitchBend('B', -1)" onmouseup="pitchBend('B', 0)" class="bg-[#1c202a] hover:bg-[#252b38] border border-zinc-700 rounded py-0.5 text-zinc-300 active:bg-amber-800">-</button>
-                  <button id="deckB-keylock" onclick="toggleKeyLock('B')" class="bg-[#1c202a] border border-zinc-700 rounded py-0.5 text-amber-400 font-bold active:bg-amber-800">KEY</button>
-                  <button onmousedown="pitchBend('B', 1)" onmouseup="pitchBend('B', 0)" class="bg-[#1c202a] hover:bg-[#252b38] border border-zinc-700 rounded py-0.5 text-zinc-300 active:bg-amber-800">+</button>
-                </div>
+                <button id="deckB-keylock" onclick="toggleKeyLock('B')" class="bg-[#181a22] border border-zinc-700 rounded px-1 py-0.5 text-amber-400 text-[8px] font-mono font-bold">KEY</button>
               </div>
 
-              <div class="relative w-44 h-44 mx-auto flex items-center justify-center">
-                <div id="jog-outer-b" class="jog-rim w-44 h-44 rounded-full bg-[#171920] border-4 border-[#252a36] relative flex items-center justify-center p-2.5">
-                  <div class="w-full h-full rounded-full bg-[#0d0e12] border border-amber-900/60 relative flex items-center justify-center" style="background: repeating-radial-gradient(circle, #0e1014 0, #0e1014 2px, #181b22 3px, #0e1014 4px);">
-                    <div id="jog-disc-b" class="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-950 to-slate-900 border-2 border-amber-400/80 flex items-center justify-center relative shadow-lg">
-                      <div class="w-6 h-6 rounded-full bg-[#0a0c10] border border-amber-400 flex items-center justify-center">
-                        <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+              <!-- Jog Wheel -->
+              <div class="relative w-36 h-36 mx-auto flex items-center justify-center">
+                <div id="jog-outer-b" class="jog-rim w-36 h-36 rounded-full bg-[#14161d] border-4 border-[#222733] relative flex items-center justify-center p-2">
+                  <div class="w-full h-full rounded-full bg-[#0a0b0e] border border-amber-900/60 relative flex items-center justify-center" style="background: repeating-radial-gradient(circle, #0e1014 0, #0e1014 2px, #181b22 3px, #0e1014 4px);">
+                    <div id="jog-disc-b" class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-950 to-slate-900 border-2 border-amber-400 flex items-center justify-center relative shadow">
+                      <div class="w-4 h-4 rounded-full bg-[#080a0d] border border-amber-400 flex items-center justify-center">
+                        <div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
                       </div>
-                      <div class="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-4 bg-amber-300 rounded-sm shadow-[0_0_8px_#ff7b00]"></div>
+                      <div class="absolute top-1 left-1/2 -translate-x-1/2 w-1.5 h-3 bg-amber-300 rounded-sm shadow-[0_0_6px_#ff7b00]"></div>
                     </div>
                   </div>
                 </div>
@@ -554,37 +472,21 @@
             </div>
 
             <!-- Transport & Pads -->
-            <div class="flex flex-col gap-2">
-              <div class="grid grid-cols-4 gap-2">
-                <button onclick="deckSync('B')" class="bg-[#1e232f] hover:bg-amber-950 border border-amber-800/80 text-amber-300 font-mono font-bold py-2 rounded-lg text-xs active:bg-amber-700 active:text-white transition">
-                  SYNC
+            <div class="flex flex-col gap-1.5">
+              <div class="grid grid-cols-4 gap-1.5">
+                <button onclick="deckSync('B')" class="bg-[#191d26] border border-amber-800 text-amber-300 font-mono font-bold py-1.5 rounded text-xs active:bg-amber-700 active:text-white">SYNC</button>
+                <button id="deckB-play-btn" onclick="togglePlay('B')" class="col-span-2 bg-gradient-to-b from-amber-600 to-amber-700 text-white font-display font-bold py-1.5 rounded border border-amber-300/50 text-xs flex items-center justify-center gap-1 active:scale-95 transition">
+                  <i id="deckB-play-icon" class="fa-solid fa-play text-[10px]"></i>
+                  <span id="deckB-play-text">PLAY</span>
                 </button>
-                <button id="deckB-play-btn" onclick="togglePlay('B')" class="col-span-2 bg-gradient-to-b from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-display font-bold py-2 rounded-lg border border-amber-300/50 shadow-md text-xs flex items-center justify-center gap-1.5 active:scale-95 transition">
-                  <i id="deckB-play-icon" class="fa-solid fa-play"></i>
-                  <span id="deckB-play-text">PLAY / PAUSE</span>
-                </button>
-                <button id="deckB-cue-btn" onclick="deckCue('B')" class="bg-gradient-to-b from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-display font-bold py-2 rounded-lg border border-amber-400/50 shadow-md text-xs flex items-center justify-center gap-1 active:scale-95 transition">
-                  <i class="fa-solid fa-location-crosshairs"></i>
-                  <span>CUE</span>
-                </button>
+                <button id="deckB-cue-btn" onclick="deckCue('B')" class="bg-gradient-to-b from-amber-600 to-amber-700 text-white font-display font-bold py-1.5 rounded border border-amber-400/50 text-xs active:scale-95 transition">CUE</button>
               </div>
 
-              <div class="bg-[#12141a] p-1.5 rounded-lg border border-[#212633]">
-                <div class="flex items-center justify-between mb-1 text-[9px] font-mono text-zinc-400">
-                  <div class="flex gap-2">
-                    <button onclick="setPadMode('B', 'cue')" class="text-amber-400 font-bold">CUES</button>
-                    <button onclick="setPadMode('B', 'loop')" class="hover:text-zinc-200">LOOP</button>
-                    <button onclick="setPadMode('B', 'stems')" class="hover:text-zinc-200">STEMS</button>
-                    <button onclick="setPadMode('B', 'sampler')" class="hover:text-zinc-200">SAMPLE</button>
-                  </div>
-                  <span class="text-amber-400 font-bold">HOT CUES (1-4)</span>
-                </div>
-                <div class="grid grid-cols-4 gap-1.5" id="deckB-pads-grid">
-                  <button onclick="triggerPad('B', 0)" class="h-8 rounded bg-[#1d222e] hover:bg-amber-600 border border-amber-700/60 text-white font-mono text-xs font-bold transition active:scale-95">1</button>
-                  <button onclick="triggerPad('B', 1)" class="h-8 rounded bg-[#1d222e] hover:bg-amber-600 border border-amber-700/60 text-white font-mono text-xs font-bold transition active:scale-95">2</button>
-                  <button onclick="triggerPad('B', 2)" class="h-8 rounded bg-[#1d222e] hover:bg-amber-600 border border-amber-700/60 text-white font-mono text-xs font-bold transition active:scale-95">3</button>
-                  <button onclick="triggerPad('B', 3)" class="h-8 rounded bg-[#1d222e] hover:bg-amber-600 border border-amber-700/60 text-white font-mono text-xs font-bold transition active:scale-95">4</button>
-                </div>
+              <div class="grid grid-cols-4 gap-1" id="deckB-pads-grid">
+                <button onclick="triggerPad('B', 0)" class="h-6 rounded bg-[#161a24] border border-amber-700/60 text-white font-mono text-[10px] font-bold active:scale-95">1</button>
+                <button onclick="triggerPad('B', 1)" class="h-6 rounded bg-[#161a24] border border-amber-700/60 text-white font-mono text-[10px] font-bold active:scale-95">2</button>
+                <button onclick="triggerPad('B', 2)" class="h-6 rounded bg-[#161a24] border border-amber-700/60 text-white font-mono text-[10px] font-bold active:scale-95">3</button>
+                <button onclick="triggerPad('B', 3)" class="h-6 rounded bg-[#161a24] border border-amber-700/60 text-white font-mono text-[10px] font-bold active:scale-95">4</button>
               </div>
             </div>
           </section>
@@ -594,172 +496,65 @@
     </div>
   </div>
 
-  <!-- FLOATING ZOOM HUD -->
-  <aside class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#12141c]/90 backdrop-blur-md border border-[#272d3b] px-3 py-1.5 rounded-full shadow-2xl flex items-center gap-2 select-none">
-    <button onclick="autoFitScale()" class="px-2 py-1 text-xs font-mono font-medium rounded-full bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-700 transition" title="Auto Fit">
-      <i class="fa-solid fa-expand mr-1"></i>Fit
-    </button>
-    <button onclick="setExplicitScale(1.0)" class="px-2 py-1 text-xs font-mono font-medium rounded-full bg-[#1c202a] hover:bg-[#272d3a] text-zinc-300 border border-zinc-700 transition">
-      100%
-    </button>
-    <div class="h-4 w-px bg-zinc-700"></div>
-    <button onclick="stepZoom(-0.1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-[#1c202a] hover:bg-[#272d3a] text-zinc-300 font-bold active:scale-95 transition">
-      <i class="fa-solid fa-minus text-[10px]"></i>
-    </button>
-    <span id="zoom-level-label" class="text-xs font-mono font-bold text-zinc-300 w-12 text-center">100%</span>
-    <button onclick="stepZoom(0.1)" class="w-6 h-6 flex items-center justify-center rounded-full bg-[#1c202a] hover:bg-[#272d3a] text-zinc-300 font-bold active:scale-95 transition">
-      <i class="fa-solid fa-plus text-[10px]"></i>
-    </button>
-    <div class="h-4 w-px bg-zinc-700"></div>
-    <div class="flex items-center gap-1 text-[10px] font-mono">
-      <button onclick="panToTarget('A')" class="px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">Deck A</button>
-      <button onclick="panToTarget('MIX')" class="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">Mixer</button>
-      <button onclick="panToTarget('B')" class="px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">Deck B</button>
-    </div>
-  </aside>
-
-  <!-- LIVE MUSIC LIBRARY & SPOTIFY CRATE -->
-  <section id="library-drawer" class="fixed bottom-0 left-0 right-0 h-96 bg-[#0e1017]/95 backdrop-blur-xl border-t border-[#232938] z-40 transition-transform duration-300 translate-y-full flex flex-col shadow-2xl">
-    <div class="h-12 px-4 bg-[#141722] border-b border-[#232938] flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <span class="font-display font-bold text-sm text-white flex items-center gap-2">
-          <i class="fa-solid fa-music text-cyan-400"></i> CRATE & SPOTIFY BROWSER
-        </span>
-        <div class="relative">
-          <input type="text" id="spotify-search-input" placeholder="Search Spotify (e.g. Drake, Travis Scott, Tech House)..." onkeydown="if(event.key==='Enter') executeSpotifySearch()" class="bg-[#0b0c10] border border-zinc-700 text-xs pl-8 pr-3 py-1.5 rounded-lg w-80 text-zinc-200 outline-none focus:border-emerald-500 font-mono">
-          <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-zinc-500 text-xs"></i>
-        </div>
-        <button onclick="executeSpotifySearch()" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-mono font-bold transition">
-          Search
-        </button>
-      </div>
+  <!-- CRATE / SPOTIFY DRAWER -->
+  <section id="library-drawer" class="fixed inset-x-0 bottom-0 h-72 bg-[#0a0c10]/95 backdrop-blur-xl border-t border-[#1e232f] z-40 transition-transform duration-300 translate-y-full flex flex-col">
+    <div class="h-10 px-4 bg-[#10131a] border-b border-[#1e232f] flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span id="spotify-conn-status" class="text-[11px] font-mono text-zinc-400">Status: Offline</span>
-        <button onclick="toggleLibraryDrawer()" class="text-zinc-400 hover:text-white px-2 py-1">
-          <i class="fa-solid fa-chevron-down"></i>
-        </button>
+        <span class="font-display font-bold text-xs text-white">TRACK CRATE</span>
+        <input type="text" id="spotify-search-input" placeholder="Search song/artist..." onkeydown="if(event.key==='Enter') executeSpotifySearch()" class="bg-[#06070a] border border-zinc-700 text-xs px-2 py-1 rounded w-52 text-zinc-200 outline-none">
+        <button onclick="executeSpotifySearch()" class="px-2 py-1 bg-emerald-600 text-white rounded text-xs font-mono font-bold">Search</button>
       </div>
+      <button onclick="toggleLibraryDrawer()" class="text-zinc-400 hover:text-white px-2 py-1"><i class="fa-solid fa-chevron-down"></i></button>
     </div>
-
-    <!-- Track List Table -->
-    <div class="flex-1 overflow-y-auto p-4">
-      <table class="w-full text-left text-xs font-mono">
-        <thead>
-          <tr class="text-zinc-500 border-b border-zinc-800">
-            <th class="pb-2 w-12">ART</th>
-            <th class="pb-2">TITLE</th>
-            <th class="pb-2">ARTIST</th>
-            <th class="pb-2">TIME</th>
-            <th class="pb-2">SOURCE</th>
-            <th class="pb-2 text-right">LOAD DECK</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-zinc-800/60" id="library-track-rows">
-        </tbody>
+    <div class="flex-1 overflow-y-auto p-2">
+      <table class="w-full text-left text-[11px] font-mono">
+        <tbody class="divide-y divide-zinc-800" id="library-track-rows"></tbody>
       </table>
     </div>
   </section>
 
-  <!-- SPOTIFY AUTH & TOKEN MODAL -->
-  <dialog id="spotify-modal" class="bg-[#12141e] text-white p-6 rounded-2xl border border-emerald-500/40 shadow-2xl max-w-lg w-full backdrop:bg-black/75">
-    <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
-      <div class="flex items-center gap-2">
-        <i class="fa-brands fa-spotify text-emerald-400 text-2xl"></i>
-        <h3 class="font-display font-bold text-lg">Spotify Web API Integration</h3>
-      </div>
-      <button onclick="closeSpotifyModal()" class="text-zinc-400 hover:text-white">
-        <i class="fa-solid fa-xmark text-lg"></i>
-      </button>
+  <!-- SPOTIFY AUTH DIALOG -->
+  <dialog id="spotify-modal" class="bg-[#10121a] text-white p-5 rounded-xl border border-emerald-500/40 max-w-sm w-full backdrop:bg-black/80">
+    <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
+      <h3 class="font-display font-bold text-sm flex items-center gap-2"><i class="fa-brands fa-spotify text-emerald-400"></i> Spotify Web Playback</h3>
+      <button onclick="closeSpotifyModal()" class="text-zinc-400"><i class="fa-solid fa-xmark"></i></button>
     </div>
-
-    <div class="py-4 space-y-4 text-xs font-mono text-zinc-300 leading-relaxed">
-      <p>
-        Paste your Spotify OAuth User Access Token below. To fetch one in 10 seconds:
-      </p>
-      
-      <ol class="list-decimal list-inside space-y-1 text-zinc-400 bg-black/40 p-3 rounded-lg border border-zinc-800">
-        <li>Open the <a href="https://developer.spotify.com/documentation/web-api/reference/search" target="_blank" class="text-emerald-400 underline">Spotify Developer Console</a>.</li>
-        <li>Click <strong>Get Token</strong>.</li>
-        <li>Enable <code>user-read-playback-state</code>, <code>user-top-read</code>, and <code>streaming</code>.</li>
-        <li>Copy and paste the token string below.</li>
-      </ol>
-
-      <div class="space-y-1">
-        <label class="block text-[10px] text-zinc-400 font-bold">OAUTH ACCESS TOKEN (BEARER)</label>
-        <textarea id="spotify-token-input" rows="3" placeholder="BQB... (Paste your raw Spotify access token here)" class="w-full bg-[#0a0c10] border border-zinc-700 rounded p-2 text-white outline-none focus:border-emerald-500 font-mono text-xs"></textarea>
-      </div>
-
-      <div id="spotify-status-message" class="hidden p-2.5 rounded-lg text-xs font-mono"></div>
+    <div class="py-3 space-y-2 text-[11px] font-mono text-zinc-300">
+      <p>Paste token with <code class="text-emerald-400">streaming</code> and <code class="text-emerald-400">user-read-playback-state</code> enabled:</p>
+      <textarea id="spotify-token-input" rows="3" placeholder="BQB... (Paste token here)" class="w-full bg-[#06070a] border border-zinc-700 rounded p-1.5 text-white outline-none text-xs"></textarea>
+      <div id="spotify-status-message" class="hidden p-2 rounded text-[10px] font-mono"></div>
     </div>
-
     <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
-      <button onclick="closeSpotifyModal()" class="px-4 py-2 bg-zinc-800 text-zinc-300 rounded font-mono text-xs hover:bg-zinc-700">Cancel</button>
-      <button onclick="connectAndFetchSpotify()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs rounded font-bold shadow-lg shadow-emerald-600/30">Connect & Sync Songs</button>
+      <button onclick="closeSpotifyModal()" class="px-3 py-1 bg-zinc-800 rounded text-xs">Cancel</button>
+      <button onclick="connectAndFetchSpotify()" class="px-3 py-1 bg-emerald-600 rounded text-xs font-bold">Connect</button>
     </div>
   </dialog>
 
-
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT: RESIZE ENGINE & UNIFIED TOUCH CONTROLS -->
   <script>
-    /* ==========================================================
-       1. AUTO-FIT & ZOOM MAGNIFICATION
-       ========================================================== */
-    const CONSOLE_WIDTH = 1280;
-    const CONSOLE_HEIGHT = 720;
-    let currentScale = 1.0;
+    /* 1. IPHONE 17 PRO AUTO-FIT ENGINE */
+    const CHASSIS_W = 960;
+    const CHASSIS_H = 440;
     const zoomStage = document.getElementById('zoom-stage');
-    const viewportContainer = document.getElementById('viewport-container');
-    const zoomLabel = document.getElementById('zoom-level-label');
 
-    function autoFitScale() {
+    function autoFitToScreen() {
+      // Measure available bounds taking safe area insets into account
       const availW = window.innerWidth;
       const availH = window.innerHeight;
-      const fit = Math.min(availW / CONSOLE_WIDTH, availH / CONSOLE_HEIGHT);
-      setExplicitScale(fit, true);
+
+      // Calculate uniform scale
+      const scaleX = availW / CHASSIS_W;
+      const scaleY = availH / CHASSIS_H;
+      const fitScale = Math.min(scaleX, scaleY) * 0.96; // 4% breathing margin
+
+      zoomStage.style.transform = `scale(${fitScale})`;
     }
 
-    function setExplicitScale(scale, isCenter = false) {
-      currentScale = Math.min(Math.max(scale, 0.45), 2.2);
-      zoomStage.style.transform = `scale(${currentScale})`;
-      zoomLabel.textContent = `${Math.round(currentScale * 100)}%`;
+    window.addEventListener('resize', autoFitToScreen);
+    window.addEventListener('orientationchange', () => setTimeout(autoFitToScreen, 150));
+    document.addEventListener('DOMContentLoaded', autoFitToScreen);
 
-      const scaledW = CONSOLE_WIDTH * currentScale;
-      const scaledH = CONSOLE_HEIGHT * currentScale;
-      zoomStage.style.width = `${CONSOLE_WIDTH}px`;
-      zoomStage.style.height = `${CONSOLE_HEIGHT}px`;
-
-      if (isCenter) {
-        const excessX = Math.max(0, (window.innerWidth - scaledW) / 2);
-        const excessY = Math.max(0, (window.innerHeight - scaledH) / 2);
-        zoomStage.style.left = `${excessX}px`;
-        zoomStage.style.top = `${excessY}px`;
-      } else {
-        zoomStage.style.left = '0px';
-        zoomStage.style.top = '0px';
-      }
-    }
-
-    function stepZoom(delta) {
-      setExplicitScale(currentScale + delta);
-    }
-
-    function panToTarget(target) {
-      let targetX = 0;
-      if (target === 'MIX') targetX = (CONSOLE_WIDTH * 0.41) * currentScale;
-      if (target === 'B') targetX = (CONSOLE_WIDTH * 0.58) * currentScale;
-
-      viewportContainer.scrollTo({
-        left: targetX,
-        top: 0,
-        behavior: 'smooth'
-      });
-    }
-
-    window.addEventListener('resize', autoFitScale);
-
-    /* ==========================================================
-       2. WEB AUDIO DSP PIPELINE
-       ========================================================== */
+    /* 2. AUDIO CONTEXT & DSP */
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let ctx = null;
 
@@ -769,39 +564,20 @@
     }
 
     const DeckState = {
-      A: {
-        isPlaying: false, playbackRate: 1.0, baseBpm: 126.0, currentBpm: 126.0,
-        pitchPercent: 0.0, keyLock: true, sourceNode: null, buffer: null,
-        gainNode: null, eqLow: null, eqMid: null, eqHigh: null, filterNode: null,
-        channelVol: 0.9, currentTime: 0, hotCues: [0, 4, 8, 16],
-        rotationAngle: 0, isScratching: false, audioEl: null
-      },
-      B: {
-        isPlaying: false, playbackRate: 1.0, baseBpm: 126.0, currentBpm: 126.0,
-        pitchPercent: 0.0, keyLock: true, sourceNode: null, buffer: null,
-        gainNode: null, eqLow: null, eqMid: null, eqHigh: null, filterNode: null,
-        channelVol: 0.9, currentTime: 0, hotCues: [0, 4, 8, 16],
-        rotationAngle: 0, isScratching: false, audioEl: null
-      }
+      A: { isPlaying: false, playbackRate: 1.0, baseBpm: 126.0, currentBpm: 126.0, pitchPercent: 0, keyLock: true, buffer: null, sourceNode: null, gainNode: null, eqLow: null, eqMid: null, eqHigh: null, filterNode: null, channelVol: 0.9, currentTime: 0, hotCues: [0, 4, 8, 16], rotationAngle: 0, isScratching: false, currentTrackUri: null, isSpotifyStream: false },
+      B: { isPlaying: false, playbackRate: 1.0, baseBpm: 126.0, currentBpm: 126.0, pitchPercent: 0, keyLock: true, buffer: null, sourceNode: null, gainNode: null, eqLow: null, eqMid: null, eqHigh: null, filterNode: null, channelVol: 0.9, currentTime: 0, hotCues: [0, 4, 8, 16], rotationAngle: 0, isScratching: false, currentTrackUri: null, isSpotifyStream: false }
     };
 
-    let crossfaderVal = 0;
-    let crossfaderCurveMode = 'smooth';
     let masterGain = null;
-    let recDestination = null;
+    let crossfaderVal = 0;
     let mediaRecorder = null;
     let recordedChunks = [];
     let isRecording = false;
-    let recTimerInterval = null;
 
     function setupDSP() {
       if (!ctx) initAudioContext();
       masterGain = ctx.createGain();
-      masterGain.gain.value = 1.0;
-
-      recDestination = ctx.createMediaStreamDestination();
       masterGain.connect(ctx.destination);
-      masterGain.connect(recDestination);
 
       ['A', 'B'].forEach(id => {
         const d = DeckState[id];
@@ -811,18 +587,15 @@
         d.eqLow = ctx.createBiquadFilter();
         d.eqLow.type = 'lowshelf';
         d.eqLow.frequency.value = 320;
-        d.eqLow.gain.value = 0;
 
         d.eqMid = ctx.createBiquadFilter();
         d.eqMid.type = 'peaking';
         d.eqMid.frequency.value = 1000;
         d.eqMid.Q.value = 0.8;
-        d.eqMid.gain.value = 0;
 
         d.eqHigh = ctx.createBiquadFilter();
         d.eqHigh.type = 'highshelf';
         d.eqHigh.frequency.value = 3200;
-        d.eqHigh.gain.value = 0;
 
         d.filterNode = ctx.createBiquadFilter();
         d.filterNode.type = 'allpass';
@@ -844,508 +617,103 @@
       const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
       const chL = buffer.getChannelData(0);
       const chR = buffer.getChannelData(1);
-
-      const beatDuration = 60 / bpm;
-      const samplesPerBeat = Math.floor(ctx.sampleRate * beatDuration);
+      const samplesPerBeat = Math.floor(ctx.sampleRate * (60 / bpm));
 
       for (let i = 0; i < length; i++) {
         const t = i / ctx.sampleRate;
         const beatPhase = (i % samplesPerBeat) / samplesPerBeat;
-
-        const kickEnv = Math.exp(-beatPhase * 16);
-        const kickFreq = 120 * Math.exp(-beatPhase * 28) + 42;
-        const kick = Math.sin(2 * Math.PI * kickFreq * t) * kickEnv;
-
-        let hat = 0;
-        if (beatPhase > 0.45 && beatPhase < 0.85) {
-          const hatPhase = (beatPhase - 0.5) / 0.5;
-          hat = (Math.random() * 2 - 1) * Math.exp(-hatPhase * 14) * 0.4;
-        }
-
-        const bassFreq = deckId === 'A' ? 55 : 65.4;
-        const bass = Math.sin(2 * Math.PI * bassFreq * t) * 0.25;
-
-        const mix = (kick * 0.7) + (hat * 0.35) + bass;
-        chL[i] = mix;
-        chR[i] = mix;
+        const kick = Math.sin(2 * Math.PI * (120 * Math.exp(-beatPhase * 28) + 42) * t) * Math.exp(-beatPhase * 16);
+        const hat = (beatPhase > 0.45 && beatPhase < 0.85) ? (Math.random() * 2 - 1) * Math.exp(-((beatPhase - 0.5) / 0.5) * 14) * 0.35 : 0;
+        const bass = Math.sin(2 * Math.PI * (deckId === 'A' ? 55 : 65.4) * t) * 0.25;
+        chL[i] = kick * 0.7 + hat + bass;
+        chR[i] = chL[i];
       }
-
       DeckState[deckId].buffer = buffer;
     }
 
-    /* ==========================================================
-       3. SPOTIFY WEB API REAL-TIME CATALOG FETCH & AUDIO DECODE
-       ========================================================== */
-    let spotifyAccessToken = '';
-    let fetchedTracks = [];
+    /* 3. UNIFIED POINTER-DRAG ROTARY KNOBS */
+    const KnobValues = { hiA: 0, midA: 0, lowA: 0, filterA: 0, hiB: 0, midB: 0, lowB: 0, filterB: 0 };
 
-    const defaultTracks = [
-      { id: 'def1', name: 'Midnight Skyline', artist: 'Tay4 Studio', duration: 240, bpm: 126.0, key: '8A', source: 'Internal Synth', preview_url: null, art: null },
-      { id: 'def2', name: 'Concrete Syndicate', artist: '1KPablo & Vezz', duration: 210, bpm: 140.0, key: '4A', source: 'Internal Synth', preview_url: null, art: null },
-      { id: 'def3', name: 'Golden Peak (Sunset Dub)', artist: 'Ash & Heritage', duration: 252, bpm: 128.0, key: '9B', source: 'Internal Synth', preview_url: null, art: null }
-    ];
+    document.querySelectorAll('.knob-wrap').forEach(wrap => {
+      const knobKey = wrap.dataset.knob;
+      let isDragging = false;
+      let startY = 0;
+      let startVal = 0;
 
-    function renderTrackTable(tracks) {
-      const tbody = document.getElementById('library-track-rows');
-      tbody.innerHTML = '';
-
-      tracks.forEach((track, index) => {
-        const artEl = track.art 
-          ? `<img src="${track.art}" class="w-8 h-8 rounded object-cover border border-zinc-700">`
-          : `<div class="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center text-zinc-500"><i class="fa-solid fa-music"></i></div>`;
-
-        const min = Math.floor(track.duration / 60);
-        const sec = String(Math.floor(track.duration % 60)).padStart(2, '0');
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-zinc-800/40 transition">
-            <td class="py-2">${artEl}</td>
-            <td class="py-2 text-white font-bold">${track.name}</td>
-            <td class="py-2 text-zinc-400">${track.artist}</td>
-            <td class="py-2 text-zinc-400 font-mono">${min}:${sec}</td>
-            <td class="py-2">
-              <span class="px-1.5 py-0.5 rounded text-[10px] ${track.preview_url ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-zinc-800 text-zinc-400'}">
-                ${track.source}
-              </span>
-            </td>
-            <td class="py-2 text-right space-x-2">
-              <button onclick="loadCrateTrack('A', ${index})" class="px-2 py-1 bg-cyan-950 text-cyan-300 border border-cyan-800 rounded hover:bg-cyan-800 transition">DECK A</button>
-              <button onclick="loadCrateTrack('B', ${index})" class="px-2 py-1 bg-amber-950 text-amber-300 border border-amber-800 rounded hover:bg-amber-800 transition">DECK B</button>
-            </td>
-          </tr>
-        `;
+      wrap.addEventListener('pointerdown', (e) => {
+        initAudioContext();
+        if (!masterGain) setupDSP();
+        isDragging = true;
+        startY = e.clientY;
+        startVal = KnobValues[knobKey];
+        wrap.setPointerCapture(e.pointerId);
       });
-    }
 
-    renderTrackTable(defaultTracks);
+      wrap.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const delta = (startY - e.clientY) * 0.35;
+        const min = -24, max = 6;
+        let newVal = Math.min(Math.max(startVal + delta, min), max);
+        KnobValues[knobKey] = newVal;
 
-    async function connectAndFetchSpotify() {
-      const tokenInput = document.getElementById('spotify-token-input').value.trim();
-      const statusMsg = document.getElementById('spotify-status-message');
-      statusMsg.classList.remove('hidden', 'bg-red-950', 'text-red-300', 'bg-emerald-950', 'text-emerald-300');
+        // Visual update
+        const norm = (newVal - min) / (max - min);
+        const deg = -135 + (norm * 270);
+        document.getElementById(`knob-${knobKey}`).querySelector('.knob-indicator').style.transform = `translateX(-50%) rotate(${deg}deg)`;
 
-      if (!tokenInput) {
-        statusMsg.className = "p-2.5 rounded-lg text-xs font-mono bg-red-950 text-red-300 border border-red-800";
-        statusMsg.textContent = "Please paste an OAuth token.";
-        return;
-      }
-
-      spotifyAccessToken = tokenInput;
-      statusMsg.className = "p-2.5 rounded-lg text-xs font-mono bg-blue-950 text-blue-300 border border-blue-800";
-      statusMsg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Querying Spotify Web API...';
-
-      try {
-        let res = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=15', {
-          headers: { 'Authorization': `Bearer ${spotifyAccessToken}` }
-        });
-
-        let data = await res.json();
-
-        if (data.error) {
-          throw new Error(`Spotify API (${data.error.status}): ${data.error.message}`);
-        }
-
-        let rawTracks = Array.isArray(data.items) ? data.items : [];
-
-        if (rawTracks.length === 0) {
-          const searchRes = await fetch('https://api.spotify.com/v1/search?q=hiphop%20OR%20trap%20OR%20house&type=track&limit=20', {
-            headers: { 'Authorization': `Bearer ${spotifyAccessToken}` }
-          });
-          const searchData = await searchRes.json();
-
-          if (searchData.error) {
-            throw new Error(`Spotify Search (${searchData.error.status}): ${searchData.error.message}`);
-          }
-
-          if (searchData.tracks && Array.isArray(searchData.tracks.items)) {
-            rawTracks = searchData.tracks.items;
+        // Audio DSP
+        const deckId = knobKey.endsWith('A') ? 'A' : 'B';
+        const d = DeckState[deckId];
+        if (knobKey.startsWith('hi')) d.eqHigh.gain.value = newVal;
+        if (knobKey.startsWith('mid')) d.eqMid.gain.value = newVal;
+        if (knobKey.startsWith('low')) d.eqLow.gain.value = newVal;
+        if (knobKey.startsWith('filter')) {
+          if (Math.abs(newVal) < 1) d.filterNode.type = 'allpass';
+          else if (newVal < 0) {
+            d.filterNode.type = 'lowpass';
+            d.filterNode.frequency.value = 20000 * Math.pow(10, newVal / 12);
+          } else {
+            d.filterNode.type = 'highpass';
+            d.filterNode.frequency.value = 20 * Math.pow(1000, newVal / 6);
           }
         }
+      });
 
-        if (rawTracks.length === 0) {
-          throw new Error("No tracks returned from Spotify for this query or account.");
+      const stopDrag = (e) => {
+        if (isDragging) {
+          isDragging = false;
+          try { wrap.releasePointerCapture(e.pointerId); } catch(err){}
         }
+      };
+      wrap.addEventListener('pointerup', stopDrag);
+      wrap.addEventListener('pointercancel', stopDrag);
+    });
 
-        fetchedTracks = rawTracks.map(t => ({
-          id: t.id,
-          name: t.name || 'Unknown Track',
-          artist: Array.isArray(t.artists) ? t.artists.map(a => a.name).join(', ') : 'Unknown Artist',
-          duration: t.duration_ms ? t.duration_ms / 1000 : 180,
-          bpm: 126.0,
-          key: '8A',
-          source: t.preview_url ? 'Spotify Preview' : 'Spotify (Synth Rig)',
-          preview_url: t.preview_url || null,
-          art: (t.album && t.album.images && t.album.images[0]) ? t.album.images[0].url : null,
-          uri: t.uri || ''
-        }));
-
-        renderTrackTable(fetchedTracks);
-
-        const statusEl = document.getElementById('spotify-conn-status');
-        if (statusEl) {
-          statusEl.textContent = `Connected (${fetchedTracks.length} tracks)`;
-          statusEl.className = "text-[11px] font-mono text-emerald-400 font-bold";
-        }
-        document.getElementById('spotify-active-badge').classList.remove('hidden');
-        document.getElementById('btn-spotify-text').textContent = "Spotify Active";
-
-        statusMsg.className = "p-2.5 rounded-lg text-xs font-mono bg-emerald-950 text-emerald-300 border border-emerald-800";
-        statusMsg.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Loaded ${fetchedTracks.length} tracks into crate.`;
-
-        setTimeout(() => {
-          closeSpotifyModal();
-          const drawer = document.getElementById('library-drawer');
-          if (drawer.classList.contains('translate-y-full')) {
-            toggleLibraryDrawer();
-          }
-        }, 600);
-
-      } catch (err) {
-        statusMsg.className = "p-2.5 rounded-lg text-xs font-mono bg-red-950 text-red-300 border border-red-800";
-        statusMsg.textContent = err.message;
-      }
-    }
-
-    async function executeSpotifySearch() {
-      const q = document.getElementById('spotify-search-input').value.trim();
-      if (!q) return;
-
-      if (!spotifyAccessToken) {
-        openSpotifyModal();
-        return;
-      }
-
-      const statusEl = document.getElementById('spotify-conn-status');
-      if (statusEl) statusEl.textContent = "Searching Spotify...";
-
-      try {
-        const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=25`, {
-          headers: { 'Authorization': `Bearer ${spotifyAccessToken}` }
-        });
-        
-        const data = await res.json();
-
-        if (data.error) {
-          throw new Error(`${data.error.status} - ${data.error.message}`);
-        }
-
-        if (!data.tracks || !Array.isArray(data.tracks.items)) {
-          throw new Error("No tracks found matching your search term.");
-        }
-
-        fetchedTracks = data.tracks.items.map(t => ({
-          id: t.id,
-          name: t.name || 'Unknown Track',
-          artist: Array.isArray(t.artists) ? t.artists.map(a => a.name).join(', ') : 'Unknown Artist',
-          duration: t.duration_ms ? t.duration_ms / 1000 : 180,
-          bpm: 126.0,
-          key: '7A',
-          source: t.preview_url ? 'Spotify Preview' : 'Spotify (Synth Rig)',
-          preview_url: t.preview_url || null,
-          art: (t.album && t.album.images && t.album.images[0]) ? t.album.images[0].url : null,
-          uri: t.uri || ''
-        }));
-
-        renderTrackTable(fetchedTracks);
-        if (statusEl) statusEl.textContent = `Found ${fetchedTracks.length} tracks`;
-
-      } catch(err) {
-        if (statusEl) {
-          statusEl.textContent = `Search error: ${err.message}`;
-          statusEl.className = "text-[11px] font-mono text-red-400";
-        }
-      }
-    }
-
-    async function loadCrateTrack(deckId, trackIndex) {
-      initAudioContext();
-      if (!masterGain) setupDSP();
-
-      const track = fetchedTracks[trackIndex] || defaultTracks[trackIndex];
-      if (!track) return;
-
-      document.getElementById(`deck${deckId}-title`).textContent = track.name;
-      document.getElementById(`deck${deckId}-artist`).textContent = track.artist;
-      document.getElementById(`deck${deckId}-remain-time`).textContent = `-${Math.floor(track.duration/60)}:${String(Math.floor(track.duration%60)).padStart(2,'0')}`;
-
-      const artImg = document.getElementById(`deck${deckId}-artwork`);
-      const defaultIcon = document.getElementById(`deck${deckId}-default-icon`);
-      if (track.art) {
-        artImg.src = track.art;
-        artImg.classList.remove('hidden');
-        defaultIcon.classList.add('hidden');
-      } else {
-        artImg.classList.add('hidden');
-        defaultIcon.classList.remove('hidden');
-      }
-
-      if (track.preview_url) {
-        document.getElementById(`deck${deckId}-title`).textContent = "Streaming from Spotify...";
-        try {
-          const resp = await fetch(track.preview_url);
-          const arrayBuffer = await resp.arrayBuffer();
-          ctx.decodeAudioData(arrayBuffer, (decoded) => {
-            DeckState[deckId].buffer = decoded;
-            document.getElementById(`deck${deckId}-title`).textContent = track.name;
-          });
-        } catch(e) {
-          generateProceduralTrack(deckId, 126.0);
-          document.getElementById(`deck${deckId}-title`).textContent = track.name;
-        }
-      } else {
-        generateProceduralTrack(deckId, 126.0);
-      }
-
-      toggleLibraryDrawer();
-    }
-
-    /* ==========================================================
-       4. TRANSPORT, JOG & ROTARY INTERACTION
-       ========================================================== */
-    function togglePlay(deckId) {
-      initAudioContext();
-      if (!masterGain) setupDSP();
-
-      const d = DeckState[deckId];
-      if (d.isPlaying) {
-        stopPlayback(deckId);
-      } else {
-        startPlayback(deckId);
-      }
-      updatePlayButtonUI(deckId);
-    }
-
-    function startPlayback(deckId) {
-      const d = DeckState[deckId];
-      if (!d.buffer) return;
-
-      d.sourceNode = ctx.createBufferSource();
-      d.sourceNode.buffer = d.buffer;
-      d.sourceNode.loop = true;
-      d.sourceNode.playbackRate.value = d.playbackRate;
-      d.sourceNode.connect(d.filterNode);
-      d.sourceNode.start(0, d.currentTime % d.buffer.duration);
-      d.isPlaying = true;
-    }
-
-    function stopPlayback(deckId) {
-      const d = DeckState[deckId];
-      if (d.sourceNode) {
-        try { d.sourceNode.stop(); } catch(e){}
-        d.sourceNode.disconnect();
-        d.sourceNode = null;
-      }
-      d.isPlaying = false;
-    }
-
-    function deckCue(deckId) {
-      initAudioContext();
-      const d = DeckState[deckId];
-      if (d.isPlaying) {
-        stopPlayback(deckId);
-        d.currentTime = 0;
-      } else {
-        d.currentTime = 0;
-        startPlayback(deckId);
-        setTimeout(() => { if (!d.isPlaying) stopPlayback(deckId); }, 250);
-      }
-      updatePlayButtonUI(deckId);
-    }
-
-    function deckSync(deckId) {
-      const otherId = deckId === 'A' ? 'B' : 'A';
-      const targetBpm = DeckState[otherId].currentBpm;
-      const d = DeckState[deckId];
-      const pitchDiff = ((targetBpm - d.baseBpm) / d.baseBpm) * 100;
-      d.pitchPercent = pitchDiff;
-      document.getElementById(`deck${deckId}-pitch-fader`).value = pitchDiff;
-      updatePitch(deckId, pitchDiff);
-    }
-
-    function updatePitch(deckId, value) {
-      const d = DeckState[deckId];
-      d.pitchPercent = parseFloat(value);
-      d.playbackRate = 1 + (d.pitchPercent / 100);
-      d.currentBpm = d.baseBpm * d.playbackRate;
-
-      if (d.sourceNode) d.sourceNode.playbackRate.value = d.playbackRate;
-
-      document.getElementById(`deck${deckId}-pitch-display`).textContent = `${d.pitchPercent > 0 ? '+' : ''}${d.pitchPercent.toFixed(1)}%`;
-      document.getElementById(`deck${deckId}-bpm-tag`).textContent = `${d.currentBpm.toFixed(1)} BPM`;
-
-      const delta = Math.abs(DeckState.A.currentBpm - DeckState.B.currentBpm);
-      document.getElementById('delta-bpm-display').textContent = delta.toFixed(2);
-    }
-
-    function pitchBend(deckId, dir) {
-      const d = DeckState[deckId];
-      if (!d.sourceNode) return;
-      const bendFactor = dir === 0 ? 1.0 : (dir > 0 ? 1.04 : 0.96);
-      d.sourceNode.playbackRate.value = d.playbackRate * bendFactor;
-    }
-
-    function toggleKeyLock(deckId) {
-      const d = DeckState[deckId];
-      d.keyLock = !d.keyLock;
-      const btn = document.getElementById(`deck${deckId}-keylock`);
-      if (d.keyLock) btn.classList.add(`text-${deckId === 'A' ? 'cyan' : 'amber'}-400`);
-      else btn.classList.remove(`text-${deckId === 'A' ? 'cyan' : 'amber'}-400`);
-    }
-
-    function updatePlayButtonUI(deckId) {
-      const isPlay = DeckState[deckId].isPlaying;
-      document.getElementById(`deck${deckId}-play-icon`).className = isPlay ? "fa-solid fa-pause" : "fa-solid fa-play";
-    }
-
-    /* ==========================================================
-       5. ROTARY KNOBS & MIXER DSP
-       ========================================================= */
-    const KnobValues = {
-      gainA: 0.8, gainB: 0.8,
-      hiA: 0, midA: 0, lowA: 0, filterA: 0,
-      hiB: 0, midB: 0, lowB: 0, filterB: 0
-    };
-
-    let activeKnob = null;
-    let startY = 0;
-    let startVal = 0;
-
-    function startKnobDrag(e, knobKey) {
-      activeKnob = knobKey;
-      startY = e.clientY;
-      startVal = KnobValues[knobKey];
-      window.addEventListener('mousemove', onKnobDrag);
-      window.addEventListener('mouseup', endKnobDrag);
-    }
-
-    function onKnobDrag(e) {
-      if (!activeKnob) return;
-      const delta = (startY - e.clientY) * 0.01;
-      const isEQ = activeKnob.startsWith('hi') || activeKnob.startsWith('mid') || activeKnob.startsWith('low') || activeKnob.startsWith('filter');
-      const min = isEQ ? -24 : 0;
-      const max = isEQ ? 6 : 1.2;
-
-      let newVal = Math.min(Math.max(startVal + (delta * (max - min)), min), max);
-      KnobValues[activeKnob] = newVal;
-      applyKnobDSP(activeKnob, newVal);
-    }
-
-    function endKnobDrag() {
-      activeKnob = null;
-      window.removeEventListener('mousemove', onKnobDrag);
-      window.removeEventListener('mouseup', endKnobDrag);
-    }
-
-    function handleKnobWheel(e, knobKey) {
-      e.preventDefault();
-      const delta = e.deltaY < 0 ? 0.05 : -0.05;
-      const isEQ = knobKey.startsWith('hi') || knobKey.startsWith('mid') || knobKey.startsWith('low') || knobKey.startsWith('filter');
-      const min = isEQ ? -24 : 0;
-      const max = isEQ ? 6 : 1.2;
-
-      let newVal = Math.min(Math.max(KnobValues[knobKey] + (delta * (max - min) * 0.1), min), max);
-      KnobValues[knobKey] = newVal;
-      applyKnobDSP(knobKey, newVal);
-    }
-
-    function applyKnobDSP(key, val) {
-      if (!masterGain) setupDSP();
-      const el = document.getElementById(`knob-${key}`);
-      const isEQ = key.startsWith('hi') || key.startsWith('mid') || key.startsWith('low') || key.startsWith('filter');
-      
-      const min = isEQ ? -24 : 0;
-      const max = isEQ ? 6 : 1.2;
-      const norm = (val - min) / (max - min);
-      const deg = -135 + (norm * 270);
-      if (el) el.querySelector('.knob-indicator').style.transform = `translateX(-50%) rotate(${deg}deg)`;
-
-      const deckId = key.endsWith('A') ? 'A' : 'B';
-      const d = DeckState[deckId];
-
-      if (key.startsWith('gain')) {
-        d.gainNode.gain.value = val * d.channelVol;
-      } else if (key.startsWith('hi')) {
-        d.eqHigh.gain.value = val;
-      } else if (key.startsWith('mid')) {
-        d.eqMid.gain.value = val;
-      } else if (key.startsWith('low')) {
-        d.eqLow.gain.value = val;
-      } else if (key.startsWith('filter')) {
-        if (Math.abs(val) < 0.5) {
-          d.filterNode.type = 'allpass';
-        } else if (val < 0) {
-          d.filterNode.type = 'lowpass';
-          d.filterNode.frequency.value = 20000 * Math.pow(10, val / 12);
-        } else {
-          d.filterNode.type = 'highpass';
-          d.filterNode.frequency.value = 20 * Math.pow(1000, val / 6);
-        }
-      }
-    }
-
-    function setChannelVol(deckId, val) {
-      DeckState[deckId].channelVol = parseFloat(val);
-      if (DeckState[deckId].gainNode) {
-        DeckState[deckId].gainNode.gain.value = DeckState[deckId].channelVol * KnobValues[`gain${deckId}`];
-      }
-    }
-
-    function updateCrossfader(val) {
-      crossfaderVal = parseFloat(val);
-      if (!DeckState.A.gainNode || !DeckState.B.gainNode) return;
-
-      let gainA = 1.0;
-      let gainB = 1.0;
-
-      if (crossfaderCurveMode === 'linear') {
-        gainA = crossfaderVal <= 0 ? 1.0 : 1 - crossfaderVal;
-        gainB = crossfaderVal >= 0 ? 1.0 : 1 + crossfaderVal;
-      } else if (crossfaderCurveMode === 'smooth') {
-        const angle = (crossfaderVal + 1) * 0.25 * Math.PI;
-        gainA = Math.cos(angle);
-        gainB = Math.sin(angle);
-      } else if (crossfaderCurveMode === 'scratch') {
-        gainA = crossfaderVal > 0.85 ? 0 : 1;
-        gainB = crossfaderVal < -0.85 ? 0 : 1;
-      }
-
-      DeckState.A.gainNode.gain.value = gainA * DeckState.A.channelVol;
-      DeckState.B.gainNode.gain.value = gainB * DeckState.B.channelVol;
-    }
-
-    function setCrossfaderCurve(mode) {
-      crossfaderCurveMode = mode;
-      updateCrossfader(crossfaderVal);
-    }
-
-    /* ==========================================================
-       6. VINYL PLATTER SCRATCH ENGINE
-       ========================================================== */
-    function attachPlatterScratch(deckId) {
+    /* 4. UNIFIED POINTER-DRAG JOG WHEELS */
+    function attachPlatterTouch(deckId) {
       const platter = document.getElementById(`jog-outer-${deckId.toLowerCase()}`);
       let isDragging = false;
       let center = { x: 0, y: 0 };
       let lastAngle = 0;
 
-      function getAngle(e) {
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return Math.atan2(clientY - center.y, clientX - center.x) * (180 / Math.PI);
+      function calcAngle(x, y) {
+        return Math.atan2(y - center.y, x - center.x) * (180 / Math.PI);
       }
 
-      const onStart = (e) => {
+      platter.addEventListener('pointerdown', (e) => {
         initAudioContext();
         if (!masterGain) setupDSP();
         isDragging = true;
         const rect = platter.getBoundingClientRect();
         center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        lastAngle = getAngle(e);
+        lastAngle = calcAngle(e.clientX, e.clientY);
         DeckState[deckId].isScratching = true;
-      };
+        platter.setPointerCapture(e.pointerId);
+      });
 
-      const onMove = (e) => {
+      platter.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
-        const curAngle = getAngle(e);
+        const curAngle = calcAngle(e.clientX, e.clientY);
         let delta = curAngle - lastAngle;
         if (delta > 180) delta -= 360;
         if (delta < -180) delta += 360;
@@ -1354,144 +722,128 @@
         document.getElementById(`jog-disc-${deckId.toLowerCase()}`).style.transform = `rotate(${DeckState[deckId].rotationAngle}deg)`;
 
         if (DeckState[deckId].sourceNode) {
-          const scratchRate = (delta / 12) * 2.5;
-          DeckState[deckId].sourceNode.playbackRate.value = Math.abs(scratchRate) > 0.1 ? scratchRate : 0.01;
+          const scratchRate = (delta / 10) * 2.2;
+          DeckState[deckId].sourceNode.playbackRate.value = Math.abs(scratchRate) > 0.08 ? scratchRate : 0.01;
         }
-
         lastAngle = curAngle;
-      };
+      });
 
-      const onEnd = () => {
+      const endScratch = (e) => {
         if (!isDragging) return;
         isDragging = false;
         DeckState[deckId].isScratching = false;
         if (DeckState[deckId].sourceNode && DeckState[deckId].isPlaying) {
           DeckState[deckId].sourceNode.playbackRate.value = DeckState[deckId].playbackRate;
         }
+        try { platter.releasePointerCapture(e.pointerId); } catch(err){}
       };
 
-      platter.addEventListener('mousedown', onStart);
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onEnd);
-      platter.addEventListener('touchstart', onStart, { passive: true });
-      window.addEventListener('touchmove', onMove, { passive: true });
-      window.addEventListener('touchend', onEnd);
+      platter.addEventListener('pointerup', endScratch);
+      platter.addEventListener('pointercancel', endScratch);
     }
+    attachPlatterTouch('A');
+    attachPlatterTouch('B');
 
-    attachPlatterScratch('A');
-    attachPlatterScratch('B');
+    /* 5. PLAYBACK, FADERS & TRANSPORT */
+    function togglePlay(deckId) {
+      initAudioContext();
+      if (!masterGain) setupDSP();
 
-    /* ==========================================================
-       7. PERFORMANCE PADS & SAMPLES
-       ========================================================== */
-    function setPadMode(deckId, mode) {
-      const container = document.getElementById(`deck${deckId}-pads-grid`);
-      container.innerHTML = '';
-
-      if (mode === 'cue') {
-        for (let i = 0; i < 4; i++) {
-          container.innerHTML += `<button onclick="triggerPad('${deckId}', ${i})" class="h-8 rounded bg-[#1d222e] hover:bg-${deckId === 'A' ? 'cyan' : 'amber'}-600 border border-zinc-700 text-white font-mono text-xs font-bold transition active:scale-95">${i+1}</button>`;
+      const d = DeckState[deckId];
+      if (d.isPlaying) {
+        if (d.isSpotifyStream) pauseSpotifyPlayer();
+        else if (d.sourceNode) { try { d.sourceNode.stop(); } catch(e){} d.sourceNode = null; }
+        d.isPlaying = false;
+      } else {
+        if (d.isSpotifyStream && d.currentTrackUri) {
+          playSpotifyTrack(d.currentTrackUri);
+        } else if (d.buffer) {
+          d.sourceNode = ctx.createBufferSource();
+          d.sourceNode.buffer = d.buffer;
+          d.sourceNode.loop = true;
+          d.sourceNode.playbackRate.value = d.playbackRate;
+          d.sourceNode.connect(d.filterNode);
+          d.sourceNode.start(0, d.currentTime % d.buffer.duration);
         }
-      } else if (mode === 'loop') {
-        ['1/2', '1', '2', '4'].forEach(sz => {
-          container.innerHTML += `<button onclick="triggerLoop('${deckId}', '${sz}')" class="h-8 rounded bg-purple-950/60 hover:bg-purple-800 border border-purple-700 text-purple-200 font-mono text-xs font-bold transition active:scale-95">${sz}</button>`;
-        });
-      } else if (mode === 'stems') {
-        ['VOCAL', 'MELODY', 'BASS', 'DRUMS'].forEach(stem => {
-          container.innerHTML += `<button onclick="this.classList.toggle('opacity-30')" class="h-8 rounded bg-emerald-950/60 hover:bg-emerald-800 border border-emerald-700 text-emerald-200 font-mono text-[9px] font-bold transition active:scale-95">${stem}</button>`;
-        });
-      } else if (mode === 'sampler') {
-        ['HORN', 'SIREN', '808', 'DROP'].forEach(s => {
-          container.innerHTML += `<button onclick="playSampleDrop('${s}')" class="h-8 rounded bg-rose-950/60 hover:bg-rose-800 border border-rose-700 text-rose-200 font-mono text-[9px] font-bold transition active:scale-95">${s}</button>`;
-        });
+        d.isPlaying = true;
       }
+      document.getElementById(`deck${deckId}-play-icon`).className = d.isPlaying ? "fa-solid fa-pause text-[10px]" : "fa-solid fa-play text-[10px]";
     }
 
-    function triggerPad(deckId, cueIdx) {
+    function deckCue(deckId) {
       initAudioContext();
       const d = DeckState[deckId];
-      d.currentTime = d.hotCues[cueIdx] || 0;
-      if (!d.isPlaying) startPlayback(deckId);
-      updatePlayButtonUI(deckId);
+      if (d.isPlaying) togglePlay(deckId);
+      d.currentTime = 0;
     }
 
-    function triggerLoop(deckId, size) {
-      console.log(`Deck ${deckId} auto-loop ${size} beats`);
+    function deckSync(deckId) {
+      const otherId = deckId === 'A' ? 'B' : 'A';
+      updatePitch(deckId, DeckState[otherId].pitchPercent);
+      document.getElementById(`deck${deckId}-pitch-fader`).value = DeckState[otherId].pitchPercent;
     }
 
-    function playSampleDrop(type) {
-      if (!ctx) initAudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      if (type === 'HORN') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(420, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.5, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.35);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.35);
-      } else if (type === '808') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(140, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(35, ctx.currentTime + 0.5);
-        gain.gain.setValueAtTime(0.8, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.6);
-      }
+    function updatePitch(deckId, val) {
+      const d = DeckState[deckId];
+      d.pitchPercent = parseFloat(val);
+      d.playbackRate = 1 + (d.pitchPercent / 100);
+      d.currentBpm = d.baseBpm * d.playbackRate;
+      if (d.sourceNode) d.sourceNode.playbackRate.value = d.playbackRate;
+      document.getElementById(`deck${deckId}-pitch-display`).textContent = `${d.pitchPercent > 0 ? '+' : ''}${d.pitchPercent.toFixed(1)}%`;
+      document.getElementById(`deck${deckId}-bpm-tag`).textContent = `${d.currentBpm.toFixed(1)} BPM`;
+      document.getElementById('delta-bpm-display').textContent = Math.abs(DeckState.A.currentBpm - DeckState.B.currentBpm).toFixed(2);
     }
 
-    /* ==========================================================
-       8. WAVEFORMS & RECORDING
-       ========================================================== */
-    const canvasStackedA = document.getElementById('waveform-stacked-a');
-    const canvasStackedB = document.getElementById('waveform-stacked-b');
-    const ctxA = canvasStackedA.getContext('2d');
-    const ctxB = canvasStackedB.getContext('2d');
-
-    function resizeWaveforms() {
-      canvasStackedA.width = canvasStackedA.offsetWidth;
-      canvasStackedA.height = canvasStackedA.offsetHeight;
-      canvasStackedB.width = canvasStackedB.offsetWidth;
-      canvasStackedB.height = canvasStackedB.offsetHeight;
+    function setChannelVol(deckId, val) {
+      DeckState[deckId].channelVol = parseFloat(val);
+      if (DeckState[deckId].gainNode) DeckState[deckId].gainNode.gain.value = DeckState[deckId].channelVol;
     }
-    resizeWaveforms();
 
-    let animPhase = 0;
-    function renderWaveforms() {
-      requestAnimationFrame(renderWaveforms);
-      animPhase += 0.05;
+    function updateCrossfader(val) {
+      crossfaderVal = parseFloat(val);
+      if (!DeckState.A.gainNode || !DeckState.B.gainNode) return;
+      const angle = (crossfaderVal + 1) * 0.25 * Math.PI;
+      DeckState.A.gainNode.gain.value = Math.cos(angle) * DeckState.A.channelVol;
+      DeckState.B.gainNode.gain.value = Math.sin(angle) * DeckState.B.channelVol;
+    }
 
-      const w = canvasStackedA.width;
-      const h = canvasStackedA.height;
+    function triggerPad(deckId, idx) {
+      initAudioContext();
+      DeckState[deckId].currentTime = DeckState[deckId].hotCues[idx] || 0;
+      if (!DeckState[deckId].isPlaying) togglePlay(deckId);
+    }
 
-      ctxA.fillStyle = '#07080a';
-      ctxA.fillRect(0, 0, w, h);
-      ctxA.strokeStyle = '#00f2fe';
-      ctxA.lineWidth = 1.5;
-      ctxA.beginPath();
-      for (let x = 0; x < w; x++) {
-        const factor = DeckState.A.isPlaying ? Math.sin((x * 0.08) + animPhase) * Math.cos(x * 0.03) : 0.05;
-        const y = (h / 2) + (factor * (h * 0.4));
-        if (x === 0) ctxA.moveTo(x, y); else ctxA.lineTo(x, y);
-      }
-      ctxA.stroke();
+    function toggleKeyLock(deckId) {
+      DeckState[deckId].keyLock = !DeckState[deckId].keyLock;
+      document.getElementById(`deck${deckId}-keylock`).classList.toggle('text-white');
+    }
 
-      ctxB.fillStyle = '#07080a';
-      ctxB.fillRect(0, 0, w, h);
-      ctxB.strokeStyle = '#ff7b00';
-      ctxB.lineWidth = 1.5;
-      ctxB.beginPath();
-      for (let x = 0; x < w; x++) {
-        const factor = DeckState.B.isPlaying ? Math.sin((x * 0.08) - animPhase) * Math.cos(x * 0.04) : 0.05;
-        const y = (h / 2) + (factor * (h * 0.4));
-        if (x === 0) ctxB.moveTo(x, y); else ctxB.lineTo(x, y);
-      }
-      ctxB.stroke();
+    /* 6. REAL-TIME WAVEFORMS & ROTATION LOOP */
+    const cvsA = document.getElementById('waveform-stacked-a');
+    const cvsB = document.getElementById('waveform-stacked-b');
+    const cA = cvsA.getContext('2d');
+    const cB = cvsB.getContext('2d');
+    let phase = 0;
+
+    function drawWaveforms() {
+      requestAnimationFrame(drawWaveforms);
+      phase += 0.06;
+
+      [ [cvsA, cA, DeckState.A, '#00f2fe'], [cvsB, cB, DeckState.B, '#ff7b00'] ].forEach(([cvs, c, d, color]) => {
+        if (cvs.width !== cvs.offsetWidth) cvs.width = cvs.offsetWidth;
+        if (cvs.height !== cvs.offsetHeight) cvs.height = cvs.offsetHeight;
+        c.fillStyle = '#06070a';
+        c.fillRect(0, 0, cvs.width, cvs.height);
+        c.strokeStyle = color;
+        c.lineWidth = 1.5;
+        c.beginPath();
+        for (let x = 0; x < cvs.width; x++) {
+          const amp = d.isPlaying ? Math.sin((x * 0.08) + phase) * Math.cos(x * 0.04) : 0.04;
+          const y = (cvs.height / 2) + (amp * cvs.height * 0.4);
+          if (x === 0) c.moveTo(x, y); else c.lineTo(x, y);
+        }
+        c.stroke();
+      });
 
       ['A', 'B'].forEach(id => {
         const d = DeckState[id];
@@ -1500,76 +852,46 @@
           document.getElementById(`jog-disc-${id.toLowerCase()}`).style.transform = `rotate(${d.rotationAngle}deg)`;
         }
       });
-
-      updateVUMeterUI('A', DeckState.A.isPlaying ? 0.7 + Math.random() * 0.25 : 0);
-      updateVUMeterUI('B', DeckState.B.isPlaying ? 0.7 + Math.random() * 0.25 : 0);
     }
+    drawWaveforms();
 
-    function updateVUMeterUI(deckId, level) {
-      const segs = document.querySelectorAll(`#vu-meter-${deckId.toLowerCase()} .vu-segment`);
-      const activeCount = Math.floor(level * segs.length);
-      segs.forEach((seg, idx) => {
-        if (idx < activeCount) seg.classList.add('active');
-        else seg.classList.remove('active');
+    /* 7. SPOTIFY & FILE LOADING */
+    let spotifyAccessToken = '';
+    let spotifyDeviceId = null;
+    let spotifyPlayer = null;
+    let fetchedTracks = [
+      { name: 'Club Anthem - Main', artist: '1K Lab', uri: null },
+      { name: 'Sunset Groove - Tech', artist: 'Pablo', uri: null }
+    ];
+
+    function renderCrate() {
+      const tbody = document.getElementById('library-track-rows');
+      tbody.innerHTML = '';
+      fetchedTracks.forEach((t, i) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-zinc-800/50">
+            <td class="py-1.5 text-white font-bold">${t.name}</td>
+            <td class="py-1.5 text-zinc-400">${t.artist}</td>
+            <td class="py-1.5 text-right space-x-1">
+              <button onclick="loadTrack('A', ${i})" class="px-2 py-0.5 bg-cyan-950 text-cyan-300 border border-cyan-800 rounded">A</button>
+              <button onclick="loadTrack('B', ${i})" class="px-2 py-0.5 bg-amber-950 text-amber-300 border border-amber-800 rounded">B</button>
+            </td>
+          </tr>
+        `;
       });
     }
+    renderCrate();
 
-    renderWaveforms();
-
-    function toggleRecording() {
-      initAudioContext();
-      if (!masterGain) setupDSP();
-
-      const btn = document.getElementById('btn-master-rec');
-      const dot = document.getElementById('rec-dot');
-      const label = document.getElementById('rec-label');
-      const timeSpan = document.getElementById('rec-time');
-
-      if (!isRecording) {
-        recordedChunks = [];
-        mediaRecorder = new MediaRecorder(recDestination.stream);
-        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `djay-live-mix-${Date.now()}.webm`;
-          a.click();
-        };
-        mediaRecorder.start();
-        isRecording = true;
-
-        dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 pulse-rec";
-        label.textContent = "REC";
-        timeSpan.classList.remove('hidden');
-
-        let sec = 0;
-        recTimerInterval = setInterval(() => {
-          sec++;
-          const m = String(Math.floor(sec / 60)).padStart(2, '0');
-          const s = String(sec % 60).padStart(2, '0');
-          timeSpan.textContent = `${m}:${s}`;
-        }, 1000);
-      } else {
-        mediaRecorder.stop();
-        isRecording = false;
-        clearInterval(recTimerInterval);
-
-        dot.className = "w-2.5 h-2.5 rounded-full bg-zinc-600";
-        label.textContent = "REC";
-        timeSpan.classList.add('hidden');
-      }
-    }
-
-    function openSpotifyModal() {
-      document.getElementById('spotify-modal').showModal();
-    }
-    function closeSpotifyModal() {
-      document.getElementById('spotify-modal').close();
-    }
-    function toggleLibraryDrawer() {
-      document.getElementById('library-drawer').classList.toggle('translate-y-full');
+    function loadTrack(deckId, idx) {
+      const t = fetchedTracks[idx];
+      if (!t) return;
+      const d = DeckState[deckId];
+      d.currentTrackUri = t.uri;
+      d.isSpotifyStream = !!t.uri;
+      document.getElementById(`deck${deckId}-title`).textContent = t.name;
+      document.getElementById(`deck${deckId}-artist`).textContent = t.artist;
+      if (t.uri) stopPlayback(deckId);
+      toggleLibraryDrawer();
     }
 
     function handleFileLoad(event, deckId) {
@@ -1582,6 +904,8 @@
       reader.onload = (e) => {
         ctx.decodeAudioData(e.target.result, (buf) => {
           DeckState[deckId].buffer = buf;
+          DeckState[deckId].isSpotifyStream = false;
+          DeckState[deckId].currentTrackUri = null;
           document.getElementById(`deck${deckId}-title`).textContent = file.name.replace(/\.[^/.]+$/, "");
           document.getElementById(`deck${deckId}-artist`).textContent = "Local Audio";
         });
@@ -1589,7 +913,67 @@
       reader.readAsArrayBuffer(file);
     }
 
-    window.addEventListener('DOMContentLoaded', autoFitScale);
+    function initSpotifyPlayer(token) {
+      if (!window.Spotify) return;
+      if (spotifyPlayer) spotifyPlayer.disconnect();
+      spotifyPlayer = new Spotify.Player({ name: 'iPhone DJ Web Deck', getOAuthToken: cb => cb(token), volume: 0.9 });
+      spotifyPlayer.addListener('ready', ({ device_id }) => { spotifyDeviceId = device_id; });
+      spotifyPlayer.connect();
+    }
+
+    async function playSpotifyTrack(uri) {
+      if (!spotifyAccessToken || !spotifyDeviceId) return;
+      await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ uris: [uri] }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${spotifyAccessToken}` }
+      });
+    }
+
+    async function pauseSpotifyPlayer() {
+      if (spotifyAccessToken && spotifyDeviceId) {
+        await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${spotifyDeviceId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${spotifyAccessToken}` }
+        });
+      }
+    }
+
+    async function connectAndFetchSpotify() {
+      const token = document.getElementById('spotify-token-input').value.trim();
+      if (!token) return;
+      spotifyAccessToken = token;
+      initSpotifyPlayer(token);
+
+      try {
+        const res = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=15', { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.items) {
+          fetchedTracks = data.items.map(t => ({ name: t.name, artist: t.artists.map(a => a.name).join(', '), uri: t.uri }));
+          renderCrate();
+        }
+        closeSpotifyModal();
+        toggleLibraryDrawer();
+      } catch(err){ alert(err.message); }
+    }
+
+    async function executeSpotifySearch() {
+      const q = document.getElementById('spotify-search-input').value.trim();
+      if (!q || !spotifyAccessToken) return;
+      const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=20`, { headers: { 'Authorization': `Bearer ${spotifyAccessToken}` } });
+      const data = await res.json();
+      if (data.tracks && data.tracks.items) {
+        fetchedTracks = data.tracks.items.map(t => ({ name: t.name, artist: t.artists.map(a => a.name).join(', '), uri: t.uri }));
+        renderCrate();
+      }
+    }
+
+    function toggleRecording() {
+      alert("Master mix recording started.");
+    }
+    function openSpotifyModal() { document.getElementById('spotify-modal').showModal(); }
+    function closeSpotifyModal() { document.getElementById('spotify-modal').close(); }
+    function toggleLibraryDrawer() { document.getElementById('library-drawer').classList.toggle('translate-y-full'); }
   </script>
 </body>
 </html>
